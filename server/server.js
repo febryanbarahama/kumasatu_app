@@ -4,6 +4,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import db from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
+import keluargaRoutes from "./src/routes/keluargaRoutes.js";
+import individuRoutes from "./src/routes/individuRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -25,6 +27,12 @@ app.get("/", (req, res) => {
 
 // API auth Endpoint
 app.use("/api/auth", authRoutes);
+
+// API keluarga Endpoint
+app.use("/api/keluarga", keluargaRoutes);
+
+// API individu Endpoint
+app.use("/api/individu", individuRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

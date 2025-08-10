@@ -1,4 +1,3 @@
-// components/Layout/DashboardLayout.jsx
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -32,6 +31,10 @@ export default function DashboardLayout() {
     setThemeMode(mode);
   };
 
+  const sidebarWidth = sidebarOpen ? 224 : 80; // px
+  const headerHeight = 64; // px
+  const paddingExtra = 16; // px ekstra ruang nyaman
+
   return (
     <div
       className={`flex h-screen transition-colors duration-300 ${
@@ -39,23 +42,55 @@ export default function DashboardLayout() {
       }`}
       data-theme={themeMode}
     >
+      {/* Sidebar fixed di kiri atas, menimpa header */}
       <Sidebar
         sidebarOpen={sidebarOpen}
         themeMode={themeMode}
         toggleSidebar={toggleSidebar}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          height: "100vh",
+          width: sidebarWidth,
+          zIndex: 50, // lebih tinggi supaya menimpa header
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}
       />
 
-      <div className="flex flex-col flex-1">
-        <Header themeMode={themeMode} changeThemeMode={changeThemeMode} />
+      {/* Header full width, fixed di atas */}
+      <Header
+        themeMode={themeMode}
+        changeThemeMode={changeThemeMode}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw", // penuh lebar viewport
+          height: headerHeight,
+          zIndex: 40, // di bawah sidebar
+        }}
+      />
 
-        <main
-          className={`flex-1 p-6 overflow-auto transition-colors duration-300 ${
-            themeMode === "light" ? "bg-gray-50" : "bg-gray-900"
-          }`}
-        >
-          <Outlet />
-        </main>
-      </div>
+      {/* Konten utama dengan padding ekstra */}
+      <main
+        className={`flex-1 overflow-auto transition-colors duration-300     ${
+          themeMode === "light"
+            ? "bg-gray-50 text-gray-900"
+            : "bg-gray-900 text-gray-100"
+        }`}
+        style={{
+          paddingTop: headerHeight + paddingExtra,
+          paddingLeft: sidebarWidth + paddingExtra,
+          paddingRight: paddingExtra,
+          paddingBottom: paddingExtra,
+          height: `calc(100vh - ${headerHeight}px)`,
+          width: `calc(100vw - ${sidebarWidth}px)`,
+        }}
+      >
+        <Outlet />
+      </main>
     </div>
   );
 }

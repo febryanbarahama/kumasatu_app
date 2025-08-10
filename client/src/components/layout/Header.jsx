@@ -1,10 +1,9 @@
-// components/Layout/Header.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { FiSun, FiMoon } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/authContexts.jsx";
 
-export default function Header({ themeMode, changeThemeMode }) {
+export default function Header({ themeMode, changeThemeMode, style }) {
   const [modeDropdown, setModeDropdown] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
 
@@ -38,6 +37,7 @@ export default function Header({ themeMode, changeThemeMode }) {
 
   return (
     <header
+      style={style} // menerima style dari parent (full width)
       className={`relative flex items-center justify-end h-16 px-6 space-x-4 border-b transition-colors duration-300 ${
         themeMode === "light"
           ? "bg-white border-gray-200"

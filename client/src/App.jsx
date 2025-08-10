@@ -2,10 +2,11 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/authContexts.jsx";
 import Login from "./pages/Login.jsx";
-import DashboardPage from "./pages/DashboardPage.jsx"; // layout dashboard
-import Dashboard from "./pages/Dashboard.jsx"; // halaman dashboard
-import AccountPage from "./pages/AccountPage.jsx"; // halaman account
+import DashboardPage from "./pages/DashboardPage.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import AccountPage from "./pages/AccountPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Keluarga from "./pages/Keluarga.jsx";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -46,6 +47,8 @@ function App() {
             <Route index element={<Dashboard />} />
             {/* Route untuk Account */}
             <Route path="account" element={<AccountPage />} />
+            <Route path="penduduk/keluarga" element={<Keluarga />} />
+            {/* <Route path="penduduk/individu" element={<Individu />} /> */}
             {/* Route lain bisa ditambahkan di sini */}
           </Route>
         </Routes>

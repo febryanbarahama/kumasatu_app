@@ -1,5 +1,4 @@
-// components/Layout/Sidebar.jsx
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FiHome,
@@ -8,23 +7,31 @@ import {
   FiLogOut,
   FiChevronLeft,
   FiChevronRight,
+  FiChevronDown,
+  FiChevronUp,
 } from "react-icons/fi";
-
-const menus = [{ name: "Dashboard", icon: <FiHome />, path: "/dashboard" }];
-
-const accountMenus = [
-  { name: "Account", icon: <FiUser />, path: "/dashboard/account" },
-  { name: "Settings", icon: <FiSettings />, path: "/settings" },
-  { name: "Logout", icon: <FiLogOut />, action: "logout" },
-];
 
 export default function Sidebar({
   sidebarOpen,
   themeMode,
   toggleSidebar,
   onMenuClick,
+  style,
 }) {
   const navigate = useNavigate();
+  const [pendudukDropdown, setPendudukDropdown] = useState(false);
+
+  // Close dropdown when clicked outside
+  const pendudukRef = useRef(null);
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (pendudukRef.current && !pendudukRef.current.contains(event.target)) {
+        setPendudukDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleMenuClick = (menu) => {
     if (menu.action === "logout") {
@@ -36,13 +43,12 @@ export default function Sidebar({
 
   return (
     <aside
+      style={style} // ambil style dari props
       className={`flex flex-col ${
         themeMode === "light"
           ? "bg-white border-gray-200"
           : "bg-gray-800 border-gray-700"
-      } border-r transition-all duration-300 ${
-        sidebarOpen ? "w-56" : "w-20"
-      } overflow-visible relative`}
+      } border-r transition-all duration-300 overflow-y-auto overflow-x-hidden relative`}
     >
       {/* Header sidebar */}
       <div
@@ -90,33 +96,32 @@ export default function Sidebar({
 
       {/* Menu Utama */}
       <nav className="flex-1 px-2 py-4 overflow-y-auto">
-        {menus.map((menu) => (
-          <Link
-            key={menu.name}
-            to={menu.path}
-            className={`group flex items-center px-3 py-2 mb-3 text-sm font-medium rounded-md
+        {/* Dashboard */}
+        <Link
+          to="/dashboard"
+          className={`group flex items-center px-3 py-2 mb-3 text-sm font-medium rounded-md
               ${
                 themeMode === "light"
                   ? "text-gray-700 hover:bg-blue-100"
                   : "text-gray-300 hover:bg-blue-700"
-              } transition-all duration-300 ease-in-out
-              overflow-hidden whitespace-nowrap
-            `}
-            style={{ transitionProperty: "width, opacity, margin" }}
+              } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
+          style={{ transitionProperty: "width, opacity, margin" }}
+        >
+          <div className="flex-shrink-0 mr-3 text-lg">
+            <FiHome />
+          </div>
+          <span
+            className="inline-block transition-all duration-300 ease-in-out"
+            style={{
+              width: sidebarOpen ? "auto" : 0,
+              opacity: sidebarOpen ? 1 : 0,
+            }}
           >
-            <div className="flex-shrink-0 mr-3 text-lg">{menu.icon}</div>
-            <span
-              className="inline-block transition-all duration-300 ease-in-out"
-              style={{
-                width: sidebarOpen ? "auto" : 0,
-                opacity: sidebarOpen ? 1 : 0,
-              }}
-            >
-              {menu.name}
-            </span>
-          </Link>
-        ))}
+            Dashboard
+          </span>
+        </Link>
 
+        {/* Separator */}
         {sidebarOpen && (
           <div className="flex items-center px-3 mb-3 select-none">
             <span className="text-xs font-semibold tracking-wider text-gray-400 uppercase">
@@ -126,39 +131,157 @@ export default function Sidebar({
           </div>
         )}
 
-        {accountMenus.map((menu) => (
-          <button
-            key={menu.name}
-            onClick={() => handleMenuClick(menu)}
-            className={`group flex items-center w-full px-3 py-2 text-sm font-medium rounded-md
+        {/* Account */}
+        <button
+          onClick={() => handleMenuClick({ path: "/dashboard/account" })}
+          className={`group flex items-center w-full px-3 py-2 text-sm font-medium rounded-md
               ${
                 themeMode === "light"
                   ? "text-gray-700 hover:bg-blue-100"
                   : "text-gray-300 hover:bg-blue-700"
-              } transition-all duration-300 ease-in-out
-              overflow-hidden whitespace-nowrap
-              ${
-                menu.action === "logout"
-                  ? themeMode === "light"
-                    ? "hover:text-red-600"
-                    : "hover:text-red-400"
-                  : ""
-              }
-            `}
+              } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
+          style={{ transitionProperty: "width, opacity, margin" }}
+        >
+          <div className="flex-shrink-0 mr-3 text-lg">
+            <FiUser />
+          </div>
+          <span
+            className="inline-block transition-all duration-300 ease-in-out"
+            style={{
+              width: sidebarOpen ? "auto" : 0,
+              opacity: sidebarOpen ? 1 : 0,
+            }}
+          >
+            Account
+          </span>
+        </button>
+
+        {/* Penduduk Dropdown */}
+        <div ref={pendudukRef} className="relative">
+          <button
+            onClick={() => setPendudukDropdown((prev) => !prev)}
+            aria-haspopup="true"
+            aria-expanded={pendudukDropdown}
+            className={`group flex items-center w-full px-3 py-2 mt-1 text-sm font-medium rounded-md
+                ${
+                  themeMode === "light"
+                    ? "text-gray-700 hover:bg-blue-100"
+                    : "text-gray-300 hover:bg-blue-700"
+                } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
             style={{ transitionProperty: "width, opacity, margin" }}
           >
-            <div className="flex-shrink-0 mr-3 text-lg">{menu.icon}</div>
+            <div className="flex-shrink-0 mr-3 text-lg">
+              <FiUser />
+            </div>
             <span
-              className="inline-block transition-all duration-300 ease-in-out"
+              className="flex-1 inline-block text-left transition-all duration-300 ease-in-out"
               style={{
                 width: sidebarOpen ? "auto" : 0,
                 opacity: sidebarOpen ? 1 : 0,
               }}
             >
-              {menu.name}
+              Penduduk
             </span>
+            <div className="flex-shrink-0 ml-1 text-lg">
+              {pendudukDropdown ? <FiChevronUp /> : <FiChevronDown />}
+            </div>
           </button>
-        ))}
+
+          {/* Dropdown content */}
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              pendudukDropdown ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+            }`}
+            style={{
+              transitionProperty: "max-height, opacity",
+            }}
+          >
+            <Link
+              to="/dashboard/penduduk/keluarga"
+              className={`block px-10 py-2 text-sm rounded-md mb-1
+                ${
+                  themeMode === "light"
+                    ? "text-gray-700 hover:bg-blue-100"
+                    : "text-gray-300 hover:bg-blue-700"
+                }`}
+              style={{
+                opacity: sidebarOpen ? 1 : 0,
+                pointerEvents: sidebarOpen ? "auto" : "none",
+                transition: "opacity 0.3s ease-in-out",
+              }}
+              onClick={() => setPendudukDropdown(false)}
+            >
+              Keluarga
+            </Link>
+            <Link
+              to="/dashboard/penduduk/individu"
+              className={`block px-10 py-2 text-sm rounded-md
+                ${
+                  themeMode === "light"
+                    ? "text-gray-700 hover:bg-blue-100"
+                    : "text-gray-300 hover:bg-blue-700"
+                }`}
+              style={{
+                opacity: sidebarOpen ? 1 : 0,
+                pointerEvents: sidebarOpen ? "auto" : "none",
+                transition: "opacity 0.3s ease-in-out",
+              }}
+              onClick={() => setPendudukDropdown(false)}
+            >
+              Individu
+            </Link>
+          </div>
+        </div>
+
+        {/* Settings */}
+        <button
+          onClick={() => handleMenuClick({ path: "/settings" })}
+          className={`group flex items-center w-full px-3 py-2 mt-3 text-sm font-medium rounded-md
+              ${
+                themeMode === "light"
+                  ? "text-gray-700 hover:bg-blue-100"
+                  : "text-gray-300 hover:bg-blue-700"
+              } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
+          style={{ transitionProperty: "width, opacity, margin" }}
+        >
+          <div className="flex-shrink-0 mr-3 text-lg">
+            <FiSettings />
+          </div>
+          <span
+            className="inline-block transition-all duration-300 ease-in-out"
+            style={{
+              width: sidebarOpen ? "auto" : 0,
+              opacity: sidebarOpen ? 1 : 0,
+            }}
+          >
+            Settings
+          </span>
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => handleMenuClick({ action: "logout" })}
+          className={`group flex items-center w-full px-3 py-2 mt-3 text-sm font-medium rounded-md
+              ${
+                themeMode === "light"
+                  ? "text-gray-700 hover:text-red-600 hover:bg-red-100"
+                  : "text-gray-300 hover:text-red-400 hover:bg-red-700"
+              } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
+          style={{ transitionProperty: "width, opacity, margin" }}
+        >
+          <div className="flex-shrink-0 mr-3 text-lg">
+            <FiLogOut />
+          </div>
+          <span
+            className="inline-block transition-all duration-300 ease-in-out"
+            style={{
+              width: sidebarOpen ? "auto" : 0,
+              opacity: sidebarOpen ? 1 : 0,
+            }}
+          >
+            Logout
+          </span>
+        </button>
       </nav>
     </aside>
   );
