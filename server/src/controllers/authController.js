@@ -1,26 +1,29 @@
 import bcrypt from "bcryptjs";
 import db from "../config/db.js";
-import jwt from "jsonwebtoken"; // pastikan import jwt
+import jwt from "jsonwebtoken";
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateToken.js";
 
 // Simpan refresh token ke DB
-const storeRefreshToken = (token, userId, cb) => {
-  db.query(
-    "INSERT INTO refresh_tokens (token, user_id) VALUES (?, ?)",
-    [token, userId],
-    cb
+const storeRefreshToken = async (token, userId) => {
+  await db.query("INSERT INTO refresh_tokens (token, user_id) VALUES (?, ?)", [
+    token,
+    userId,
+  ]);
+};
+
+const removeRefreshToken = async (token) => {
+  await db.query("DELETE FROM refresh_tokens WHERE token = ?", [token]);
+};
+
+const isRefreshTokenValid = async (token) => {
+  const [rows] = await db.query(
+    "SELECT * FROM refresh_tokens WHERE token = ?",
+    [token]
   );
-};
-
-const removeRefreshToken = (token, cb) => {
-  db.query("DELETE FROM refresh_tokens WHERE token = ?", [token], cb);
-};
-
-const isRefreshTokenValid = (token, cb) => {
-  db.query("SELECT * FROM refresh_tokens WHERE token = ?", [token], cb);
+  return rows.length > 0;
 };
 
 export const getUser = (req, res) => {
@@ -36,141 +39,131 @@ export const getUser = (req, res) => {
   });
 };
 
-export const registerUser = (req, res) => {
+export const registerUser = async (req, res) => {
   const { name, email, username, password } = req.body;
 
   if (!name || !email || !username || !password) {
     return res.status(400).json({ message: "Semua field wajib diisi" });
   }
 
-  db.query(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    async (err, results) => {
-      if (err)
-        return res.status(500).json({ message: "Server error", error: err });
-      if (results.length > 0) {
-        return res.status(400).json({ message: "Username sudah terdaftar" });
-      }
-
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      db.query(
-        "INSERT INTO users (nama_pengguna, email, username, password) VALUES (?, ?, ?, ?)",
-        [name, email, username, hashedPassword],
-        (err, result) => {
-          if (err)
-            return res
-              .status(500)
-              .json({ message: "Gagal menyimpan user", error: err });
-
-          const userId = result.insertId;
-          const accessToken = generateAccessToken({ id: userId });
-          const refreshToken = generateRefreshToken({ id: userId });
-
-          storeRefreshToken(refreshToken, userId, (err2) => {
-            if (err2) console.error("Gagal menyimpan refresh token:", err2);
-
-            const cookieOptions = {
-              httpOnly: true,
-              secure: process.env.COOKIE_SECURE === "true",
-              sameSite: "lax",
-              maxAge: 7 * 24 * 60 * 60 * 1000, // 7 hari
-            };
-
-            res.cookie("refreshToken", refreshToken, cookieOptions);
-
-            return res.status(201).json({
-              id: userId,
-              name,
-              email,
-              username,
-              accessToken,
-            });
-          });
-        }
-      );
+  try {
+    const [existing] = await db.query(
+      "SELECT * FROM users WHERE username = ?",
+      [username]
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({ message: "Username sudah terdaftar" });
     }
-  );
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const [result] = await db.query(
+      "INSERT INTO users (nama_pengguna, email, username, password) VALUES (?, ?, ?, ?)",
+      [name, email, username, hashedPassword]
+    );
+
+    const userId = result.insertId;
+    const accessToken = generateAccessToken({ id: userId });
+    const refreshToken = generateRefreshToken({ id: userId });
+
+    await storeRefreshToken(refreshToken, userId);
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === "true",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
+    return res.status(201).json({
+      id: userId,
+      name,
+      email,
+      username,
+      accessToken,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error", error: err });
+  }
 };
 
-export const loginUser = (req, res) => {
+export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
-  db.query(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    async (err, results) => {
-      if (err)
-        return res.status(500).json({ message: "Server error", error: err });
-      if (results.length === 0) {
-        return res.status(400).json({ message: "Username tidak ditemukan" });
-      }
-
-      const user = results[0];
-
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ message: "Password salah" });
-      }
-
-      const userId = user.id_pengguna || user.id;
-      const accessToken = generateAccessToken({ id: userId });
-      const refreshToken = generateRefreshToken({ id: userId });
-
-      storeRefreshToken(refreshToken, userId, (err2) => {
-        if (err2) console.error("Gagal menyimpan refresh token:", err2);
-
-        const cookieOptions = {
-          httpOnly: true,
-          secure: process.env.COOKIE_SECURE === "true",
-          sameSite: "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-        };
-
-        res.cookie("refreshToken", refreshToken, cookieOptions);
-
-        res.json({
-          id: userId,
-          name: user.nama_pengguna || user.name,
-          email: user.email,
-          username: user.username,
-          accessToken,
-        });
-      });
+  try {
+    const [results] = await db.query("SELECT * FROM users WHERE username = ?", [
+      username,
+    ]);
+    if (results.length === 0) {
+      return res.status(400).json({ message: "Username tidak ditemukan" });
     }
-  );
+
+    const user = results[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Password salah" });
+    }
+
+    const userId = user.id_pengguna || user.id;
+    const accessToken = generateAccessToken({ id: userId });
+    const refreshToken = generateRefreshToken({ id: userId });
+
+    await storeRefreshToken(refreshToken, userId);
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === "true",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
+    res.json({
+      id: userId,
+      name: user.nama_pengguna || user.name,
+      email: user.email,
+      username: user.username,
+      accessToken,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error", error: err });
+  }
 };
 
-export const refreshAccessToken = (req, res) => {
+export const refreshAccessToken = async (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token)
     return res.status(401).json({ message: "Refresh token tidak ditemukan" });
 
-  isRefreshTokenValid(token, (err, results) => {
-    if (err)
-      return res.status(500).json({ message: "Server error", error: err });
-    if (results.length === 0)
-      return res.status(403).json({ message: "Refresh token tidak valid" });
-
-    try {
-      const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
-      const userId = decoded.id;
-      const newAccessToken = generateAccessToken({ id: userId });
-      return res.json({ accessToken: newAccessToken });
-    } catch (error) {
+  try {
+    const valid = await isRefreshTokenValid(token);
+    if (!valid) {
       return res.status(403).json({ message: "Refresh token tidak valid" });
     }
-  });
+
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    const userId = decoded.id;
+    const newAccessToken = generateAccessToken({ id: userId });
+    return res.json({ accessToken: newAccessToken });
+  } catch (error) {
+    return res.status(403).json({ message: "Refresh token tidak valid" });
+  }
 };
 
-export const logoutUser = (req, res) => {
+export const logoutUser = async (req, res) => {
   const token = req.cookies.refreshToken;
   if (token) {
-    removeRefreshToken(token, (err) => {
-      if (err) console.error("Gagal hapus refresh token:", err);
-    });
+    try {
+      await removeRefreshToken(token);
+    } catch (err) {
+      console.error("Gagal hapus refresh token:", err);
+    }
   }
 
   res.clearCookie("refreshToken");

@@ -113,10 +113,59 @@ export default function Keluarga() {
 
     setLoading(true);
     try {
-      await api.post("/keluarga/import", formData, {
+      const res = await api.post("/keluarga/import", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setSuccessMessage("Import data berhasil!");
+
+      let baseMessage = `Import selesai — ${res.data.sukses} data berhasil, ${res.data.gagal} data gagal.`;
+      let extraMessages = [];
+
+      // Kalau ada file gagal, baca isinya
+      if (res.data.file_gagal) {
+        try {
+          const failRes = await api.get(`/${res.data.file_gagal}`);
+          const failedData = failRes.data;
+
+          if (Array.isArray(failedData)) {
+            if (
+              failedData.some((item) =>
+                item.error_message?.includes("Duplicate entry")
+              )
+            ) {
+              extraMessages.push(
+                "Beberapa data tidak diimport karena No KK sudah ada."
+              );
+            }
+            if (
+              failedData.some((item) =>
+                item.error_message?.includes("Incorrect enum value")
+              )
+            ) {
+              extraMessages.push(
+                "Beberapa data tidak diimport karena nilai ENUM tidak valid."
+              );
+            }
+          }
+        } catch (err) {
+          console.warn("Gagal membaca file gagal:", err);
+        }
+      }
+
+      // Tampilkan pesan
+      if (res.data.gagal && res.data.gagal > 0) {
+        setSuccessMessage(
+          baseMessage +
+            (extraMessages.length ? " " + extraMessages.join(" ") : "")
+        );
+        setError(
+          `Ada ${res.data.gagal} data yang gagal diimport. Cek file ${
+            res.data.file_gagal || "import_gagal.json"
+          } di server.`
+        );
+      } else {
+        setSuccessMessage("Import data berhasil!");
+      }
+
       fetchKeluarga();
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
@@ -128,7 +177,7 @@ export default function Keluarga() {
       setTimeout(() => {
         setSuccessMessage(null);
         setError(null);
-      }, 3000);
+      }, 5000);
     }
   };
 
@@ -160,7 +209,8 @@ export default function Keluarga() {
       {/* Modal konfirmasi hapus */}
       <DeleteConfirmModal
         open={deleteConfirm.open}
-        no_kk={deleteConfirm.no_kk}
+        id={deleteConfirm.no_kk}
+        desk={" dengan No.KK"}
         onCancel={cancelDelete}
         onConfirm={handleDelete}
       />

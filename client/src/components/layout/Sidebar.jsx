@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   FiHome,
   FiUser,
-  FiSettings,
-  FiLogOut,
+  FiUsers,
   FiChevronLeft,
   FiChevronRight,
   FiChevronDown,
@@ -21,7 +20,6 @@ export default function Sidebar({
   const navigate = useNavigate();
   const [pendudukDropdown, setPendudukDropdown] = useState(false);
 
-  // Close dropdown when clicked outside
   const pendudukRef = useRef(null);
   useEffect(() => {
     function handleClickOutside(event) {
@@ -34,16 +32,14 @@ export default function Sidebar({
   }, []);
 
   const handleMenuClick = (menu) => {
-    if (menu.action === "logout") {
-      onMenuClick(menu);
-    } else if (menu.path) {
+    if (menu.path) {
       navigate(menu.path);
     }
   };
 
   return (
     <aside
-      style={style} // ambil style dari props
+      style={style}
       className={` ${
         themeMode === "light"
           ? "bg-white border-gray-200"
@@ -55,12 +51,12 @@ export default function Sidebar({
         title={sidebarOpen ? "Tutup sidebar" : "Buka sidebar"}
         onClick={toggleSidebar}
         className={`absolute top-4 -right-4 z-50 
-    w-9 h-9 rounded-full flex items-center justify-center
-    ${
-      themeMode === "light"
-        ? "bg-white border border-gray-300 hover:bg-blue-100 text-blue-600"
-        : "bg-gray-800 border border-gray-600 hover:bg-blue-700 text-blue-600 hover:text-white"
-    } transition-all duration-300 `}
+          w-9 h-9 rounded-full flex items-center justify-center
+          ${
+            themeMode === "light"
+              ? "bg-white border border-gray-300 hover:bg-blue-100 text-blue-600"
+              : "bg-gray-800 border border-gray-600 hover:bg-blue-700 text-blue-600 hover:text-white"
+          } transition-all duration-300 `}
       >
         {sidebarOpen ? (
           <FiChevronLeft size={22} />
@@ -68,6 +64,7 @@ export default function Sidebar({
           <FiChevronRight size={22} />
         )}
       </button>
+
       {/* Header sidebar */}
       <div
         className={`relative flex items-center h-16 border-b transition-padding duration-300 ${
@@ -157,19 +154,26 @@ export default function Sidebar({
         {/* Penduduk Dropdown */}
         <div ref={pendudukRef} className="relative">
           <button
-            onClick={() => setPendudukDropdown((prev) => !prev)}
+            onClick={() => {
+              if (!sidebarOpen) {
+                toggleSidebar(); // buka sidebar dulu
+                setPendudukDropdown(true); // langsung buka dropdown
+              } else {
+                setPendudukDropdown((prev) => !prev); // toggle biasa
+              }
+            }}
             aria-haspopup="true"
             aria-expanded={pendudukDropdown}
             className={`group flex items-center w-full px-3 py-2 mt-1 text-sm font-medium rounded-md
-                ${
-                  themeMode === "light"
-                    ? "text-gray-700 hover:bg-blue-100"
-                    : "text-gray-300 hover:bg-blue-700"
-                } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
+        ${
+          themeMode === "light"
+            ? "text-gray-700 hover:bg-blue-100"
+            : "text-gray-300 hover:bg-blue-700"
+        } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
             style={{ transitionProperty: "width, opacity, margin" }}
           >
             <div className="flex-shrink-0 mr-3 text-lg">
-              <FiUser />
+              <FiUsers />
             </div>
             <span
               className="flex-1 inline-block text-left transition-all duration-300 ease-in-out"
@@ -197,89 +201,37 @@ export default function Sidebar({
             <Link
               to="/dashboard/penduduk/keluarga"
               className={`block px-10 py-2 text-sm rounded-md mb-1
-                ${
-                  themeMode === "light"
-                    ? "text-gray-700 hover:bg-blue-100"
-                    : "text-gray-300 hover:bg-blue-700"
-                }`}
+        ${
+          themeMode === "light"
+            ? "text-gray-700 hover:bg-blue-100"
+            : "text-gray-300 hover:bg-blue-700"
+        }`}
               style={{
                 opacity: sidebarOpen ? 1 : 0,
                 pointerEvents: sidebarOpen ? "auto" : "none",
                 transition: "opacity 0.3s ease-in-out",
               }}
-              onClick={() => setPendudukDropdown(false)}
             >
               Keluarga
             </Link>
             <Link
               to="/dashboard/penduduk/individu"
               className={`block px-10 py-2 text-sm rounded-md
-                ${
-                  themeMode === "light"
-                    ? "text-gray-700 hover:bg-blue-100"
-                    : "text-gray-300 hover:bg-blue-700"
-                }`}
+        ${
+          themeMode === "light"
+            ? "text-gray-700 hover:bg-blue-100"
+            : "text-gray-300 hover:bg-blue-700"
+        }`}
               style={{
                 opacity: sidebarOpen ? 1 : 0,
                 pointerEvents: sidebarOpen ? "auto" : "none",
                 transition: "opacity 0.3s ease-in-out",
               }}
-              onClick={() => setPendudukDropdown(false)}
             >
               Individu
             </Link>
           </div>
         </div>
-
-        {/* Settings */}
-        <button
-          onClick={() => handleMenuClick({ path: "/settings" })}
-          className={`group flex items-center w-full px-3 py-2 mt-3 text-sm font-medium rounded-md
-              ${
-                themeMode === "light"
-                  ? "text-gray-700 hover:bg-blue-100"
-                  : "text-gray-300 hover:bg-blue-700"
-              } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
-          style={{ transitionProperty: "width, opacity, margin" }}
-        >
-          <div className="flex-shrink-0 mr-3 text-lg">
-            <FiSettings />
-          </div>
-          <span
-            className="inline-block transition-all duration-300 ease-in-out"
-            style={{
-              width: sidebarOpen ? "auto" : 0,
-              opacity: sidebarOpen ? 1 : 0,
-            }}
-          >
-            Settings
-          </span>
-        </button>
-
-        {/* Logout */}
-        <button
-          onClick={() => handleMenuClick({ action: "logout" })}
-          className={`group flex items-center w-full px-3 py-2 mt-3 text-sm font-medium rounded-md
-              ${
-                themeMode === "light"
-                  ? "text-gray-700 hover:text-red-600 hover:bg-red-100"
-                  : "text-gray-300 hover:text-red-400 hover:bg-red-700"
-              } transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}
-          style={{ transitionProperty: "width, opacity, margin" }}
-        >
-          <div className="flex-shrink-0 mr-3 text-lg">
-            <FiLogOut />
-          </div>
-          <span
-            className="inline-block transition-all duration-300 ease-in-out"
-            style={{
-              width: sidebarOpen ? "auto" : 0,
-              opacity: sidebarOpen ? 1 : 0,
-            }}
-          >
-            Logout
-          </span>
-        </button>
       </nav>
     </aside>
   );

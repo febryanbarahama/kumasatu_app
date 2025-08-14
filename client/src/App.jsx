@@ -56,7 +56,7 @@ function App() {
               element={<KeluargaForm isEdit={false} />}
             />
             <Route
-              path="penduduk/keluarga/edit/:nik"
+              path="penduduk/keluarga/edit/:no_kk"
               element={<KeluargaForm isEdit={true} />}
             />
             <Route path="penduduk/individu" element={<Individu />} />

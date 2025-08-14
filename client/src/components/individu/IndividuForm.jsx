@@ -2,11 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api/config.js";
-
 import FieldInput from "../form/FieldInput.jsx";
 import Toast from "../form/Toast.jsx";
 
-export default function IndividuForm() {
+export default function IndividuForm({ isEdit }) {
   const { nik } = useParams();
   const navigate = useNavigate();
 
@@ -126,8 +125,7 @@ export default function IndividuForm() {
     {
       name: "jaminan_kesehatan",
       label: "Jaminan Kesehatan",
-      type: "select",
-      multiple: true,
+      type: "checkbox",
       options: [
         "BPJS PBI",
         "BPJS Non-PBI",
@@ -138,25 +136,9 @@ export default function IndividuForm() {
       ],
     },
     {
-      name: "disabilitas",
-      label: "Disabilitas",
-      type: "select",
-      multiple: true,
-      options: [
-        "Penglihatan",
-        "Pendengaran",
-        "Berjalan/Naik Tangga",
-        "Menggunakan/Menggerakkan Tangan/Jari",
-        "Mengingat/Berkonsentrasi",
-        "Perilaku/Emosional",
-        "Berbicara/Komunikasi",
-      ],
-    },
-    {
       name: "menderita_penyakit",
       label: "Menderita Penyakit",
-      type: "select",
-      multiple: true,
+      type: "checkbox",
       options: [
         "Muntaber",
         "DBD",
@@ -194,8 +176,7 @@ export default function IndividuForm() {
     {
       name: "tempat_rawat_jalan",
       label: "Tempat Rawat Jalan",
-      type: "select",
-      multiple: true,
+      type: "checkbox",
       options: [
         "Rumah Sakit",
         "Klinik",
@@ -219,15 +200,14 @@ export default function IndividuForm() {
     {
       name: "tempat_rawat_inap",
       label: "Tempat Rawat Inap",
-      type: "select",
-      multiple: true,
+      type: "checkbox",
       options: ["Rumah Sakit", "Klinik", "Puskesmas", "Lainnya"],
     },
     { name: "catatan", label: "Catatan", type: "text" },
   ];
 
   const initialState = fieldsConfig.reduce((acc, field) => {
-    acc[field.name] = field.multiple ? [] : "";
+    acc[field.name] = field.type === "checkbox" ? [] : "";
     return acc;
   }, {});
 
@@ -236,32 +216,43 @@ export default function IndividuForm() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
+  // Hapus tempat_rawat_jalan & tempat_rawat_inap dari mapping karena namanya sudah sama di API
+  const fieldMap = {
+    ijazah: "ijazah_terakhir",
+    penyakit: "menderita_penyakit",
+    kali_rawat_jalan: "berapa_kali_rawat_jalan",
+    kali_rawat_inap: "berapa_kali_rawat_inap",
+  };
+
   useEffect(() => {
     if (!nik) return;
     const fetchData = async () => {
       try {
         const res = await api.get(`/individu/${nik}`);
-        const data = { ...initialState, ...res.data };
+        let data = { ...initialState, ...res.data };
+
+        Object.keys(fieldMap).forEach((apiField) => {
+          if (data[apiField] !== undefined) {
+            data[fieldMap[apiField]] = data[apiField];
+          }
+        });
 
         fieldsConfig.forEach((f) => {
-          if (f.multiple) {
+          if (f.type === "checkbox") {
             if (typeof data[f.name] === "string") {
-              data[f.name] = data[f.name]
-                ? data[f.name].split(",").map((v) => v.trim())
-                : [];
-            }
-            if (!Array.isArray(data[f.name])) {
+              data[f.name] = data[f.name] ? data[f.name].split(",") : [];
+            } else if (!Array.isArray(data[f.name])) {
               data[f.name] = [];
             }
-          } else {
-            if (Array.isArray(data[f.name])) {
-              data[f.name] = data[f.name][0] || "";
-            }
-            if (f.type === "date" && data[f.name]) {
-              const d = new Date(data[f.name]);
-              if (!isNaN(d)) {
-                data[f.name] = d.toISOString().split("T")[0];
-              }
+          }
+        });
+
+        fieldsConfig.forEach((f) => {
+          if (f.type === "date" && data[f.name]) {
+            try {
+              data[f.name] = new Date(data[f.name]).toISOString().split("T")[0];
+            } catch {
+              data[f.name] = "";
             }
           }
         });
@@ -275,12 +266,14 @@ export default function IndividuForm() {
   }, [nik]);
 
   const handleChange = (e) => {
-    const { name, value, multiple, selectedOptions } = e.target;
-    if (multiple) {
-      setForm((prev) => ({
-        ...prev,
-        [name]: Array.from(selectedOptions, (opt) => opt.value),
-      }));
+    const { name, value, type, checked } = e.target;
+    if (type === "checkbox") {
+      setForm((prev) => {
+        const current = Array.isArray(prev[name]) ? prev[name] : [];
+        return checked
+          ? { ...prev, [name]: [...current, value] }
+          : { ...prev, [name]: current.filter((v) => v !== value) };
+      });
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -289,12 +282,15 @@ export default function IndividuForm() {
   const validate = () => {
     const newErrors = {};
     fieldsConfig.forEach((f) => {
-      if (
-        f.required &&
-        (!form[f.name] ||
-          (Array.isArray(form[f.name]) && form[f.name].length === 0))
-      ) {
-        newErrors[f.name] = `${f.label} wajib diisi`;
+      if (f.required) {
+        if (
+          f.type === "checkbox" &&
+          (!form[f.name] || form[f.name].length === 0)
+        ) {
+          newErrors[f.name] = `${f.label} wajib dipilih minimal satu`;
+        } else if (!form[f.name]) {
+          newErrors[f.name] = `${f.label} wajib diisi`;
+        }
       }
     });
     setErrors(newErrors);
@@ -312,11 +308,24 @@ export default function IndividuForm() {
     setLoading(true);
     try {
       const payload = { ...form };
+
       fieldsConfig.forEach((f) => {
-        if (f.multiple && Array.isArray(payload[f.name])) {
+        if (f.type === "checkbox") {
+          if (!Array.isArray(payload[f.name])) {
+            payload[f.name] = [];
+          }
           payload[f.name] = payload[f.name].join(",");
         }
       });
+
+      Object.keys(fieldMap).forEach((apiField) => {
+        const formField = fieldMap[apiField];
+        if (payload[formField] !== undefined) {
+          payload[apiField] = payload[formField];
+          delete payload[formField];
+        }
+      });
+
       if (nik) {
         await api.put(`/individu/${nik}`, payload);
         showToast("Data berhasil diperbarui", "success");
@@ -343,29 +352,64 @@ export default function IndividuForm() {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 gap-4 md:grid-cols-2"
       >
-        {fieldsConfig.map((field) => (
-          <FieldInput
-            key={field.name}
-            label={field.label}
-            name={field.name}
-            type={field.type}
-            value={form[field.name]}
-            onChange={handleChange}
-            options={field.options || []}
-            maxLength={field.maxLength}
-            step={field.step}
-            multiple={field.multiple}
-            required={field.required}
-            error={errors[field.name]}
-          />
-        ))}
-        <div className="flex justify-end md:col-span-2">
+        {fieldsConfig.map((field) =>
+          field.type === "checkbox" ? (
+            <div key={field.name} className="md:col-span-2">
+              <label className="block mb-1 font-semibold">
+                {field.label}{" "}
+                {field.required && <span className="text-red-600">*</span>}
+              </label>
+              <div className="flex flex-wrap gap-4">
+                {field.options.map((opt) => (
+                  <label key={opt} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name={field.name}
+                      value={opt}
+                      checked={form[field.name]?.includes(opt)}
+                      onChange={handleChange}
+                      className="w-4 h-4"
+                    />
+                    <span>{opt}</span>
+                  </label>
+                ))}
+              </div>
+              {errors[field.name] && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors[field.name]}
+                </p>
+              )}
+            </div>
+          ) : (
+            <FieldInput
+              key={field.name}
+              label={field.label}
+              name={field.name}
+              type={field.type}
+              value={form[field.name] || ""}
+              onChange={handleChange}
+              options={field.options || []}
+              maxLength={field.maxLength}
+              step={field.step}
+              required={field.required}
+              error={errors[field.name]}
+            />
+          )
+        )}
+        <div className="md:col-span-2">
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+            className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-400"
           >
-            {loading ? "Menyimpan..." : "Simpan"}
+            {isEdit ? "Update Data" : "Simpan Data"}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/penduduk/individu")}
+            className="px-4 py-2 mt-4 mb-4 font-semibold text-blue-600 rounded-md hover:underline focus:outline-none focus:ring-4 focus:ring-gray-400 "
+          >
+            &larr; Kembali ke Daftar Keluarga
           </button>
         </div>
       </form>

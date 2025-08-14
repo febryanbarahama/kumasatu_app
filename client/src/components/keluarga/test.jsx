@@ -538,7 +538,7 @@ export default function KeluargaForm({ isEdit }) {
           <button
             type="button"
             onClick={() => navigate("/dashboard/penduduk/keluarga")}
-            className="px-4 py-2 mt-4 mb-4 font-semibold text-blue-600 rounded-md hover:underline focus:outline-none focus:ring-4 focus:ring-gray-400 "
+            className="px-4 py-2 mt-4 mb-4 font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
           >
             &larr; Kembali ke Daftar Keluarga
           </button>

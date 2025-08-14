@@ -2,9 +2,10 @@ import React from "react";
 
 export default function DeleteConfirmModal({
   open,
-  no_kk,
+  id,
   onCancel,
   onConfirm,
+  desk,
 }) {
   if (!open) return null;
 
@@ -17,8 +18,8 @@ export default function DeleteConfirmModal({
             Konfirmasi Hapus
           </h3>
           <p className="mb-6 text-gray-700 dark:text-gray-300">
-            Yakin ingin menghapus data dengan No. KK{" "}
-            <span className="font-mono">{no_kk}</span>?
+            Yakin ingin menghapus data{desk}{" "}
+            <span className="font-mono">{id}</span>?
           </p>
           <div className="flex justify-end gap-3">
             <button

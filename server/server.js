@@ -6,7 +6,7 @@ import db from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import keluargaRoutes from "./src/routes/keluargaRoutes.js";
 import individuRoutes from "./src/routes/individuRoutes.js";
-
+import dashboardRoutes from "./src/routes/dashboardRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -33,6 +33,8 @@ app.use("/api/keluarga", keluargaRoutes);
 
 // API individu Endpoint
 app.use("/api/individu", individuRoutes);
+
+app.use("/api/dashboard", dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
