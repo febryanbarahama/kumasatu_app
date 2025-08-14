@@ -7,6 +7,9 @@ import Dashboard from "./pages/Dashboard.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Keluarga from "./pages/Keluarga.jsx";
+import KeluargaForm from "./components/keluarga/KeluargaForm.jsx";
+import Individu from "./pages/Individu.jsx";
+import IndividuForm from "./components/individu/IndividuForm.jsx";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -48,7 +51,23 @@ function App() {
             {/* Route untuk Account */}
             <Route path="account" element={<AccountPage />} />
             <Route path="penduduk/keluarga" element={<Keluarga />} />
-            {/* <Route path="penduduk/individu" element={<Individu />} /> */}
+            <Route
+              path="penduduk/keluarga/add"
+              element={<KeluargaForm isEdit={false} />}
+            />
+            <Route
+              path="penduduk/keluarga/edit/:nik"
+              element={<KeluargaForm isEdit={true} />}
+            />
+            <Route path="penduduk/individu" element={<Individu />} />
+            <Route
+              path="penduduk/individu/add"
+              element={<IndividuForm isEdit={false} />}
+            />
+            <Route
+              path="penduduk/individu/edit/:nik"
+              element={<IndividuForm isEdit={true} />}
+            />
             {/* Route lain bisa ditambahkan di sini */}
           </Route>
         </Routes>

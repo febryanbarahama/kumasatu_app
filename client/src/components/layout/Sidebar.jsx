@@ -44,12 +44,30 @@ export default function Sidebar({
   return (
     <aside
       style={style} // ambil style dari props
-      className={`flex flex-col ${
+      className={` ${
         themeMode === "light"
           ? "bg-white border-gray-200"
           : "bg-gray-800 border-gray-700"
-      } border-r transition-all duration-300 overflow-y-auto overflow-x-hidden relative`}
+      } border-r transition-all duration-300 `}
     >
+      <button
+        aria-label={sidebarOpen ? "Tutup sidebar" : "Buka sidebar"}
+        title={sidebarOpen ? "Tutup sidebar" : "Buka sidebar"}
+        onClick={toggleSidebar}
+        className={`absolute top-4 -right-4 z-50 
+    w-9 h-9 rounded-full flex items-center justify-center
+    ${
+      themeMode === "light"
+        ? "bg-white border border-gray-300 hover:bg-blue-100 text-blue-600"
+        : "bg-gray-800 border border-gray-600 hover:bg-blue-700 text-blue-600 hover:text-white"
+    } transition-all duration-300 `}
+      >
+        {sidebarOpen ? (
+          <FiChevronLeft size={22} />
+        ) : (
+          <FiChevronRight size={22} />
+        )}
+      </button>
       {/* Header sidebar */}
       <div
         className={`relative flex items-center h-16 border-b transition-padding duration-300 ${
@@ -66,32 +84,12 @@ export default function Sidebar({
           }}
         >
           <img
-            src="../src/assets/logo.png"
+            src="/src/assets/logo.png"
             alt="Logo Kampung"
             className="flex-shrink-0 w-10 h-10"
             style={{ display: "block" }}
           />
         </Link>
-
-        <button
-          aria-label={sidebarOpen ? "Tutup sidebar" : "Buka sidebar"}
-          title={sidebarOpen ? "Tutup sidebar" : "Buka sidebar"}
-          onClick={toggleSidebar}
-          className={`absolute top-1/2 -right-4 z-30 transform -translate-y-1/2
-            w-9 h-9 rounded-full flex items-center justify-center
-            ${
-              themeMode === "light"
-                ? "bg-white border border-gray-300 hover:bg-blue-100"
-                : "bg-gray-800 border border-gray-600 hover:bg-blue-700"
-            } transition-transform duration-300 focus:outline-none`}
-          style={{ boxShadow: "0 0 6px rgba(0,0,0,0.15)" }}
-        >
-          {sidebarOpen ? (
-            <FiChevronLeft className="text-blue-600" size={22} />
-          ) : (
-            <FiChevronRight className="text-blue-600" size={22} />
-          )}
-        </button>
       </div>
 
       {/* Menu Utama */}

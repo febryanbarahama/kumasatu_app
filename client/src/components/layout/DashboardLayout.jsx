@@ -54,8 +54,6 @@ export default function DashboardLayout() {
           height: "100vh",
           width: sidebarWidth,
           zIndex: 50, // lebih tinggi supaya menimpa header
-          overflowY: "auto",
-          overflowX: "hidden",
         }}
       />
 
