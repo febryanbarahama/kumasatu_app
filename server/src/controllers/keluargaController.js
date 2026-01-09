@@ -1,59 +1,76 @@
-// src/controllers/keluargaController.js
 import db from "../config/db.js";
 import XLSX from "xlsx";
-import fs from "fs";
 
-// Helper buat WKT Point
+/* =======================
+   Helper WKT POINT
+======================= */
 function createWKTPoint(lokasi) {
   if (!lokasi || lokasi.x == null || lokasi.y == null) return null;
   return `POINT(${lokasi.x} ${lokasi.y})`;
 }
 
-// =======================
-// GET all keluarga
-// =======================
-export const getAllKeluarga = async (req, res) => {
+/* =======================
+   Helper normalize comma field
+======================= */
+const normalizeCommaField = (value) => {
+  if (!value) return null;
+  if (Array.isArray(value)) return value.join(",");
+  return String(value)
+    .split(",")
+    .map((v) => v.trim())
+    .join(",");
+};
+
+/* =======================
+   GET ALL
+======================= */
+export const getAllKeluarga = async (_, res) => {
   try {
-    const [results] = await db.query("SELECT * FROM keluarga");
-    res.json(results);
+    const [rows] = await db.query("SELECT * FROM keluarga");
+    return res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// =======================
-// GET keluarga by no_kk
-// =======================
+/* =======================
+   GET BY NO_KK
+======================= */
 export const getKeluargaByNoKK = async (req, res) => {
   try {
     const { no_kk } = req.params;
-    const [results] = await db.query("SELECT * FROM keluarga WHERE no_kk = ?", [
+
+    const [rows] = await db.query("SELECT * FROM keluarga WHERE no_kk = ?", [
       no_kk,
     ]);
 
-    if (results.length === 0) {
-      return res.status(404).json({ message: "Data keluarga tidak ditemukan" });
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Data keluarga tidak ditemukan",
+      });
     }
-    res.json(results[0]);
+
+    return res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// =======================
-// POST create keluarga
-// =======================
+/* =======================
+   CREATE
+======================= */
 export const createKeluarga = async (req, res) => {
   try {
     let data = { ...req.body };
 
-    if (Array.isArray(data.aset)) data.aset = data.aset.join(",");
-    if (Array.isArray(data.jenis_bantuan))
-      data.jenis_bantuan = data.jenis_bantuan.join(",");
-
     if (!data.no_kk || !data.nama_kk) {
-      return res.status(400).json({ message: "no_kk dan nama_kk wajib diisi" });
+      return res.status(400).json({
+        message: "no_kk dan nama_kk wajib diisi",
+      });
     }
+
+    data.aset = normalizeCommaField(data.aset);
+    data.jenis_bantuan = normalizeCommaField(data.jenis_bantuan);
 
     const lokasiWkt = createWKTPoint(data.lokasi);
     delete data.lokasi;
@@ -67,209 +84,183 @@ export const createKeluarga = async (req, res) => {
       await db.query("INSERT INTO keluarga SET ?", [data]);
     }
 
-    res.status(201).json({ message: "Data keluarga berhasil dibuat" });
+    return res.status(201).json({
+      message: "Data keluarga berhasil dibuat",
+    });
   } catch (err) {
     if (err.code === "ER_DUP_ENTRY") {
-      return res.status(400).json({ message: "No KK sudah terdaftar" });
+      return res.status(400).json({
+        message: "No KK sudah terdaftar",
+      });
     }
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// =======================
-// PUT update keluarga
-// =======================
+/* =======================
+   UPDATE
+======================= */
 export const updateKeluarga = async (req, res) => {
   try {
     const { no_kk } = req.params;
     let data = { ...req.body };
 
-    if (Array.isArray(data.aset)) data.aset = data.aset.join(",");
-    if (Array.isArray(data.jenis_bantuan))
-      data.jenis_bantuan = data.jenis_bantuan.join(",");
+    data.aset = normalizeCommaField(data.aset);
+    data.jenis_bantuan = normalizeCommaField(data.jenis_bantuan);
 
     const lokasiWkt = createWKTPoint(data.lokasi);
     delete data.lokasi;
 
-    let results;
+    let result;
     if (lokasiWkt) {
-      [results] = await db.query(
+      [result] = await db.query(
         "UPDATE keluarga SET ?, lokasi = ST_GeomFromText(?) WHERE no_kk = ?",
         [data, lokasiWkt, no_kk]
       );
     } else {
-      [results] = await db.query("UPDATE keluarga SET ? WHERE no_kk = ?", [
+      [result] = await db.query("UPDATE keluarga SET ? WHERE no_kk = ?", [
         data,
         no_kk,
       ]);
     }
 
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: "Data keluarga tidak ditemukan" });
+    if (!result.affectedRows) {
+      return res.status(404).json({
+        message: "Data keluarga tidak ditemukan",
+      });
     }
 
-    res.json({ message: "Data keluarga berhasil diupdate" });
+    return res.json({
+      message: "Data keluarga berhasil diupdate",
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// =======================
-// DELETE keluarga
-// =======================
+/* =======================
+   DELETE
+======================= */
 export const deleteKeluarga = async (req, res) => {
   try {
     const { no_kk } = req.params;
-    const [results] = await db.query("DELETE FROM keluarga WHERE no_kk = ?", [
+
+    const [result] = await db.query("DELETE FROM keluarga WHERE no_kk = ?", [
       no_kk,
     ]);
 
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: "Data keluarga tidak ditemukan" });
+    if (!result.affectedRows) {
+      return res.status(404).json({
+        message: "Data keluarga tidak ditemukan",
+      });
     }
 
-    res.json({ message: "Data keluarga berhasil dihapus" });
+    return res.json({
+      message: "Data keluarga berhasil dihapus",
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// =======================
-// ENUM & SET mapping
-// =======================
-const enumMappingKeluarga = {
-  /* ... mapping sama seperti versi lama ... */
-};
-const setMappingKeluarga = {
-  /* ... mapping sama seperti versi lama ... */
-};
-
-// Normalisasi ENUM dan SET
-function normalizeEnum(value, mapping, defaultValue = null) {
-  if (!value) return defaultValue;
-  const val = value.toString().trim().toLowerCase();
-  return mapping[val] || defaultValue;
-}
-
-function normalizeSet(value, allowedValues) {
-  if (!value) return null;
-  const values = value
-    .toString()
-    .split(",")
-    .map((v) => v.trim())
-    .filter((v) => allowedValues.includes(v));
-  return values.join(",");
-}
-
-// =======================
-// IMPORT keluarga
-// =======================
+/* =======================
+   IMPORT EXCEL
+======================= */
 export const importKeluarga = async (req, res) => {
-  console.log("📥 Mulai proses import Excel keluarga...");
-
-  if (!req.file) {
-    return res.status(400).json({ message: "File tidak ditemukan" });
-  }
-
-  const failedRows = [];
-
   try {
-    const workbook = XLSX.readFile(req.file.path);
-    const sheetName = workbook.SheetNames[0];
-    const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-    if (!sheetData.length) {
-      return res
-        .status(400)
-        .json({ message: "File Excel kosong atau format salah" });
+    if (!req.file) {
+      return res.status(400).json({
+        message: "File Excel wajib diunggah",
+      });
     }
 
-    let processed = 0;
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-    for (let index = 0; index < sheetData.length; index++) {
-      let row = sheetData[index];
+    if (!rows.length) {
+      return res.status(400).json({
+        message: "File Excel kosong",
+      });
+    }
 
-      // Normalisasi ENUM
-      for (const field in enumMappingKeluarga) {
-        if (row[field] !== undefined) {
-          row[field] = normalizeEnum(
-            row[field],
-            enumMappingKeluarga[field],
-            Object.values(enumMappingKeluarga[field])[0]
-          );
-        }
+    let success = 0;
+    let failed = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+
+      if (!r.no_kk || !r.nama_kk) {
+        failed.push({
+          row: i + 2,
+          reason: "no_kk atau nama_kk kosong",
+        });
+        continue;
       }
 
-      // Normalisasi SET
-      for (const field in setMappingKeluarga) {
-        if (row[field] !== undefined) {
-          row[field] = normalizeSet(row[field], setMappingKeluarga[field]);
-        }
-      }
-
-      // Siapkan data insert
-      const dataDb = {
-        no_kk: row.no_kk?.toString().padStart(16, "0") || null,
-        nama_kk: row.nama_kk || null,
-        nik_kk: row.nik_kk?.toString().padStart(16, "0") || null,
-        jenis_kelamin_kk: row.jenis_kelamin_kk || "laki-laki",
-        lindongan: row.lindongan || "Lindongan 1",
-        jumlah_art: row.jumlah_art || 0,
-        status_bangunan: row.status_bangunan || "Milik Sendiri",
-        status_kepemilikan_tanah:
-          row.status_kepemilikan_tanah || "Tidak memiliki",
-        luas_bangunan: row.luas_bangunan || 0,
-        luas_tanah: row.luas_tanah || 0,
-        jenis_lantai: row.jenis_lantai || "Semen",
-        jenis_dinding: row.jenis_dinding || "Tembok",
-        jenis_atap: row.jenis_atap || "Seng",
-        fasilitas_mck: row.fasilitas_mck || "Tidak ada fasilitas",
-        tempat_pembuangan_tinja: row.tempat_pembuangan_tinja || "Lainnya",
-        sumber_air_minum: row.sumber_air_minum || "Sumur",
-        sumber_air_mandi: row.sumber_air_mandi || "Sumur",
-        sumber_penerangan: row.sumber_penerangan || "Listrik PLN",
-        daya_listrik: row.daya_listrik || null,
-        bahan_bakar_memasak: row.bahan_bakar_memasak || "Kayu bakar",
-        aset: row.aset || null,
-        tanah_lain: row.tanah_lain || "Tidak ada",
-        penerima_bantuan: row.penerima_bantuan || "Tidak",
-        jenis_bantuan: row.jenis_bantuan || null,
+      const data = {
+        no_kk: String(r.no_kk),
+        nama_kk: r.nama_kk,
+        nik_kk: r.nik_kk || null,
+        jenis_kelamin_kk: r.jenis_kelamin_kk || null,
+        lindongan: r.lindongan || null,
+        jumlah_art: r.jumlah_art || null,
+        status_bangunan: r.status_bangunan || null,
+        status_kepemilikan_tanah: r.status_kepemilikan_tanah || null,
+        luas_bangunan: r.luas_bangunan || null,
+        luas_tanah: r.luas_tanah || null,
+        jenis_lantai: r.jenis_lantai || null,
+        jenis_dinding: r.jenis_dinding || null,
+        jenis_atap: r.jenis_atap || null,
+        fasilitas_mck: r.fasilitas_mck || null,
+        tempat_pembuangan_tinja: r.tempat_pembuangan_tinja || null,
+        sumber_air_minum: r.sumber_air_minum || null,
+        sumber_air_mandi: r.sumber_air_mandi || null,
+        sumber_penerangan: r.sumber_penerangan || null,
+        daya_listrik: r.daya_listrik || null,
+        bahan_bakar_memasak: r.bahan_bakar_memasak || null,
+        aset: normalizeCommaField(r.aset),
+        tanah_lain: r.tanah_lain || null,
+        penerima_bantuan: r.penerima_bantuan || null,
+        jenis_bantuan: normalizeCommaField(r.jenis_bantuan),
       };
 
+      const lokasi =
+        r.lokasi_x != null && r.lokasi_y != null
+          ? `POINT(${r.lokasi_x} ${r.lokasi_y})`
+          : null;
+
       try {
-        await db.query("INSERT INTO keluarga SET ?", [dataDb]);
-        processed++;
-      } catch (err) {
-        let customMsg = err.message;
-        if (err.code === "ER_DUP_ENTRY") {
-          customMsg = "Data dengan No KK ini sudah ada";
+        if (lokasi) {
+          await db.query(
+            "INSERT INTO keluarga SET ?, lokasi = ST_GeomFromText(?)",
+            [data, lokasi]
+          );
+        } else {
+          await db.query("INSERT INTO keluarga SET ?", [data]);
         }
-        failedRows.push({
-          row_number: index + 2,
-          no_kk: row.no_kk,
-          error_message: customMsg,
-          data: row,
+        success++;
+      } catch (err) {
+        failed.push({
+          row: i + 2,
+          no_kk: r.no_kk,
+          reason:
+            err.code === "ER_DUP_ENTRY" ? "No KK sudah terdaftar" : err.message,
         });
       }
     }
 
-    fs.unlinkSync(req.file.path);
-
-    if (failedRows.length) {
-      const failPath = "./import_gagal_keluarga.json";
-      fs.writeFileSync(failPath, JSON.stringify(failedRows, null, 2));
-    }
-
-    res.json({
-      message: "Proses import selesai",
-      sukses: processed,
-      gagal: failedRows.length,
-      file_gagal: failedRows.length ? "import_gagal_keluarga.json" : null,
+    return res.json({
+      message: "Import data keluarga selesai",
+      total: rows.length,
+      success,
+      failed_count: failed.length,
+      failed,
     });
   } catch (error) {
-    console.error("❌ Error saat membaca file:", error);
-    res
-      .status(500)
-      .json({ message: "Gagal import data", error: error.message });
+    console.error("❌ importKeluarga:", error);
+    return res.status(500).json({
+      message: "Gagal mengimpor data keluarga",
+    });
   }
 };

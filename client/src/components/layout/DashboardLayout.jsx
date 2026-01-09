@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
+import Sidebar from "./sidebar/Sidebar";
 import Header from "./Header";
 import { Outlet } from "react-router-dom";
 
@@ -31,9 +31,9 @@ export default function DashboardLayout() {
     setThemeMode(mode);
   };
 
-  const sidebarWidth = sidebarOpen ? 224 : 80; // px
-  const headerHeight = 64; // px
-  const paddingExtra = 16; // px ekstra ruang nyaman
+  const sidebarWidth = sidebarOpen ? 224 : 80;
+  const headerHeight = 64;
+  const paddingExtra = 16;
 
   return (
     <div
@@ -53,7 +53,7 @@ export default function DashboardLayout() {
           left: 0,
           height: "100vh",
           width: sidebarWidth,
-          zIndex: 50, // lebih tinggi supaya menimpa header
+          zIndex: 50,
         }}
       />
 

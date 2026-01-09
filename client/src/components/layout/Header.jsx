@@ -6,7 +6,7 @@ import { useAuth } from "../../contexts/authContexts.jsx";
 export default function Header({ themeMode, changeThemeMode, style }) {
   const [modeDropdown, setModeDropdown] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // 🔹 State modal konfirmasi
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const modeRef = useRef(null);
   const profileRef = useRef(null);
@@ -170,7 +170,7 @@ export default function Header({ themeMode, changeThemeMode, style }) {
                 </div>
                 <button
                   onClick={() => {
-                    navigate("/account");
+                    navigate("/dashboard/account");
                     setProfileDropdown(false);
                   }}
                   className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-600 ${
@@ -181,7 +181,7 @@ export default function Header({ themeMode, changeThemeMode, style }) {
                 </button>
                 <button
                   onClick={() => {
-                    setShowLogoutConfirm(true); // 🔹 Tampilkan modal
+                    setShowLogoutConfirm(true);
                   }}
                   className="flex items-center w-full px-4 py-2 text-sm font-semibold text-left hover:text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-700"
                 >

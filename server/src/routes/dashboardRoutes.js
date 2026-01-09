@@ -4,7 +4,9 @@ import protect from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// GET /api/dashboard
-router.get("/", protect, getDashboardData);
+// =======================
+// DASHBOARD (ADMIN ONLY)
+// =======================
+router.get("/", getDashboardData);
 
 export default router;

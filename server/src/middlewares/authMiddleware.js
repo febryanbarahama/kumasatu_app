@@ -1,41 +1,67 @@
 import jwt from "jsonwebtoken";
-import db from "../config/db.js";
+import getPool from "../config/db.js";
 
 const protect = async (req, res, next) => {
-  let token;
+  try {
+    let token;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-
-    try {
-      // Verifikasi JWT
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-      // Ambil user dari database
-      const [results] = await db.query(
-        "SELECT id_pengguna, nama_pengguna, email, username FROM users WHERE id_pengguna = ?",
-        [decoded.id]
-      );
-
-      if (results.length === 0) {
-        return res.status(404).json({ message: "User tidak ditemukan" });
-      }
-
-      req.user = results[0];
-      return next();
-    } catch (error) {
-      return res.status(401).json({ message: "Token tidak valid" });
+    // =========================
+    // Ambil token (Header / Cookie)
+    // =========================
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer ")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
     }
-  }
 
-  // Kalau token kosong
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Tidak ada token, otorisasi ditolak" });
+    if (!token) {
+      return res.status(401).json({
+        message: "Token tidak ditemukan, akses ditolak",
+      });
+    }
+
+    // =========================
+    // Verifikasi token
+    // =========================
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    // =========================
+    // Ambil user (minimal field)
+    // =========================
+    const pool = getPool();
+    const [[user]] = await pool.query(
+      `SELECT 
+        id_pengguna,
+        nama_pengguna,
+        email,
+        username
+       FROM users
+       WHERE id_pengguna = ?
+       LIMIT 1`,
+      [decoded.id]
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User tidak ditemukan",
+      });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token sudah kedaluwarsa" });
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Auth middleware error:", error);
+    }
+
+    return res.status(401).json({ message: "Token tidak valid" });
   }
 };
 

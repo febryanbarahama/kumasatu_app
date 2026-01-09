@@ -2,44 +2,64 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import db from "./src/config/db.js";
+
 import authRoutes from "./src/routes/authRoutes.js";
 import keluargaRoutes from "./src/routes/keluargaRoutes.js";
 import individuRoutes from "./src/routes/individuRoutes.js";
 import dashboardRoutes from "./src/routes/dashboardRoutes.js";
+import beritaRoutes from "./src/routes/beritaRoutes.js";
+import agendaRoutes from "./src/routes/agendaRoutes.js";
+import galeriRoutes from "./src/routes/galeriRoutes.js";
+import aparaturRoutes from "./src/routes/aparaturRoutes.js";
+import administrasiRoutes from "./src/routes/lynAdministrasiRoutes.js";
+import pengaduanRoutes from "./src/routes/lynPengaduanRoutes.js";
+import uploadRoutes from "./src/routes/uploadRoutes.js";
+
 dotenv.config();
+
 const app = express();
 
-// CORS - allow your frontend origin only in production
+// ===================== CORS =====================
+const allowedOrigins = [
+  "https://admin.pemkampkuma1.id",
+  "https://pemkampkuma1.id",
+  "http://localhost:5173",
+];
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   })
 );
-app.use(express.json());
+
+// ===================== MIDDLEWARE =====================
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 app.use(cookieParser());
 
-// Simple health check
+// ===================== HEALTH CHECK =====================
 app.get("/", (req, res) => {
-  res.send("Backend is running...");
+  res.json({ status: "ok", message: "Backend is running" });
 });
 
-// API auth Endpoint
+// ===================== ROUTES =====================
 app.use("/api/auth", authRoutes);
-
-// API keluarga Endpoint
 app.use("/api/keluarga", keluargaRoutes);
-
-// API individu Endpoint
 app.use("/api/individu", individuRoutes);
-
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/berita", beritaRoutes);
+app.use("/api/agenda", agendaRoutes);
+app.use("/api/galeri", galeriRoutes);
+app.use("/api/aparatur", aparaturRoutes);
+app.use("/api/administrasi", administrasiRoutes);
+app.use("/api/pengaduan", pengaduanRoutes);
+app.use("/api/upload", uploadRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// NOTE: If you are testing locally over HTTP, keep COOKIE_SECURE=false in .env.
-// In production (HTTPS) set COOKIE_SECURE=true.
+export default app;

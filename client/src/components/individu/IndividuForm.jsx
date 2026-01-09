@@ -1,4 +1,3 @@
-// src/components/IndividuForm.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api/config.js";

@@ -1,4 +1,3 @@
-// components/Toast.jsx
 import React from "react";
 
 export default function Toast({ show, message, type }) {

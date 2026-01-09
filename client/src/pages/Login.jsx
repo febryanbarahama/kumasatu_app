@@ -2,8 +2,13 @@ import React, { useState } from "react";
 import { useAuth } from "../contexts/authContexts.jsx";
 import { useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useEffect } from "react";
 
 export default function Login() {
+  useEffect(() => {
+    document.title = "Login - Admin Kampung Kuma";
+  }, []);
+
   const [form, setForm] = useState({ username: "", password: "" });
   const [validationErrors, setValidationErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -115,7 +120,7 @@ export default function Login() {
       <div
         className="flex-1 hidden bg-center bg-cover md:flex"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80')`,
+          backgroundImage: `url(/1.png)`,
         }}
         aria-hidden="true"
       ></div>
@@ -123,11 +128,7 @@ export default function Login() {
       <div className="flex items-center justify-center flex-1 p-6 bg-gray-50">
         <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
           <div className="flex justify-center mb-6">
-            <img
-              src="../src/assets/logo.png"
-              alt="Logo Kampung"
-              className="w-auto h-14"
-            />
+            <img src="/logo.png" alt="Logo Kampung" className="w-auto h-14" />
           </div>
 
           <h2 className="mb-6 text-3xl font-semibold text-center text-blue-700">

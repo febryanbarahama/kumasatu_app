@@ -1,12 +1,18 @@
 import React from "react";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 
-export default function KeluargaTable({ data, onEdit, onDelete }) {
+export default function KeluargaTable({
+  data,
+  onEdit,
+  onDelete,
+  onToggleSelect,
+  selected = new Set(),
+}) {
   if (!data.length)
     return (
       <tr>
         <td
-          colSpan={26}
+          colSpan={30}
           className="py-4 text-center text-gray-500 dark:text-gray-400"
         >
           Tidak ada data keluarga
@@ -17,8 +23,15 @@ export default function KeluargaTable({ data, onEdit, onDelete }) {
   return data.map((item) => (
     <tr
       key={item.no_kk}
-      className="transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+      className="transition-colors bg-white border-t dark:border-gray-600 dark:bg-gray-800"
     >
+      <td className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap">
+        <input
+          type="checkbox"
+          checked={selected.has(item.no_kk)}
+          onChange={() => onToggleSelect(item.no_kk)}
+        />
+      </td>
       <td className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap">
         {item.no_kk}
       </td>
@@ -101,12 +114,14 @@ export default function KeluargaTable({ data, onEdit, onDelete }) {
         <button
           onClick={() => onEdit(item.no_kk)}
           className="p-1 text-blue-600 transition rounded hover:bg-blue-100 dark:hover:bg-blue-900 dark:text-blue-400"
+          title="Edit"
         >
-          <FiEdit size={18} />
+          <FiEdit2 size={18} />
         </button>
         <button
           onClick={() => onDelete(item.no_kk)}
           className="p-1 text-red-600 transition rounded hover:bg-red-100 dark:hover:bg-red-900 dark:text-red-400"
+          title="Hapus"
         >
           <FiTrash2 size={18} />
         </button>
