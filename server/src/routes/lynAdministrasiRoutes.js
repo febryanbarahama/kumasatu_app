@@ -7,8 +7,8 @@ import {
   deleteAdministrasi,
 } from "../controllers/lynAdministrasiController.js";
 
-import protect from "../middleware/authMiddleware.js";
-import uploadLampiran from "../middleware/uploadLampiranCloudinary.js";
+import protect from "../middlewares/authMiddleware.js";
+import uploadLampiran from "../middlewares/uploadLampiranCloudinary.js";
 
 const router = express.Router();
 

@@ -7,8 +7,8 @@ import {
   deleteAparatur,
 } from "../controllers/aparaturController.js";
 
-import protect from "../middleware/authMiddleware.js";
-import upload from "../middleware/uploadCloudinary.js";
+import protect from "../middlewares/authMiddleware.js";
+import upload from "../middlewares/uploadCloudinary.js";
 
 const router = express.Router();
 
