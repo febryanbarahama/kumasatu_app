@@ -7,18 +7,29 @@ import {
   deleteGaleri,
 } from "../controllers/galeriController.js";
 
-import { uploadImage } from "../controllers/uploadController.js";
+import upload from "../middlewares/uploadCloudinary.js";
 import protect from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
+// =======================
 // PUBLIC
+// =======================
 router.get("/", getAllGaleri);
 router.get("/:id", getGaleriById);
 
-// ADMIN (protected)
-router.post("/", protect, uploadImage, createGaleri);
-router.put("/:id", protect, uploadImage, updateGaleri);
+// =======================
+// ADMIN (PROTECTED)
+// =======================
+router.post(
+  "/",
+  protect,
+  upload.single("image"), // ⬅️ field name harus sama dengan frontend
+  createGaleri
+);
+
+router.put("/:id", protect, upload.single("image"), updateGaleri);
+
 router.delete("/:id", protect, deleteGaleri);
 
 export default router;
