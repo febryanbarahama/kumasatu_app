@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
 import authRoutes from "./src/routes/authRoutes.js";
 import keluargaRoutes from "./src/routes/keluargaRoutes.js";
 import individuRoutes from "./src/routes/individuRoutes.js";
