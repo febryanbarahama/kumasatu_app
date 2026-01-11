@@ -1,51 +1,35 @@
 import express from "express";
 import {
-  getAllPengaduan,
-  getPengaduanById,
-  createPengaduan,
-  updatePengaduan,
-  deletePengaduan,
-} from "../controllers/lynPengaduanController.js";
+  getAllGaleri,
+  getGaleriById,
+  createGaleri,
+  updateGaleri,
+  deleteGaleri,
+} from "../controllers/galeriController.js";
 
 import upload from "../middlewares/uploadCloudinary.js";
+import protect from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-/**
- * =========================
- * GET
- * =========================
- */
-router.get("/", getAllPengaduan);
-router.get("/:id", getPengaduanById);
+// =======================
+// PUBLIC
+// =======================
+router.get("/", getAllGaleri);
+router.get("/:id", getGaleriById);
 
-/**
- * =========================
- * CREATE (PUBLIC + FILE)
- * =========================
- */
+// =======================
+// ADMIN (PROTECTED)
+// =======================
 router.post(
   "/",
-  upload.fields([
-    { name: "lampiran_foto", maxCount: 5 },
-    { name: "lampiran_video", maxCount: 1 },
-    { name: "lampiran_lainnya", maxCount: 3 },
-  ]),
-  createPengaduan
+  protect,
+  upload.single("image"), // ⬅️ field name harus sama dengan frontend
+  createGaleri
 );
 
-/**
- * =========================
- * UPDATE STATUS (ADMIN)
- * =========================
- */
-router.put("/:id", updatePengaduan);
+router.put("/:id", protect, upload.single("image"), updateGaleri);
 
-/**
- * =========================
- * DELETE
- * =========================
- */
-router.delete("/:id", deletePengaduan);
+router.delete("/:id", protect, deleteGaleri);
 
 export default router;
