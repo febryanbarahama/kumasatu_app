@@ -1,5 +1,5 @@
 import getPool from "../config/db.js";
-import cloudinary from "../config/cloudinary.js";
+import cloudinary from "../config/cloudinaryClient.js";
 
 /* =========================
    GET ALL APARATUR
@@ -112,7 +112,6 @@ export const createAparatur = async (req, res) => {
 /* =========================
    UPDATE APARATUR
 ========================= */
-import cloudinary from "../config/cloudinary.js";
 
 export const updateAparatur = async (req, res) => {
   try {

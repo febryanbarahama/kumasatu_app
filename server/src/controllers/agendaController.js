@@ -1,5 +1,5 @@
 import getPool from "../config/db.js";
-import cloudinary from "../config/cloudinary.js";
+import cloudinary from "../config/cloudinaryClient.js";
 
 /* =========================
    GET ALL AGENDA

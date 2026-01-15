@@ -1,5 +1,4 @@
 import getPool from "../config/db.js";
-import cloudinary from "../config/cloudinary.js";
 
 // =============================
 // GET semua galeri
