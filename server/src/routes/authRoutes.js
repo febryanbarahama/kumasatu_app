@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  registerUser,
   loginUser,
   getUser,
   refreshAccessToken,
@@ -16,7 +15,7 @@ const router = express.Router();
 // =======================
 // AUTH (PUBLIC)
 // =======================
-router.post("/register", registerUser);
+
 router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
 
