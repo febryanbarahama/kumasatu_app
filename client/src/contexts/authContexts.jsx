@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = async () => {
     if (!accessToken) return;
     try {
-      const res = await api.get("/auth/profile"); // uses Authorization header
+      const res = await api.get("api/auth/profile"); // uses Authorization header
       setUser(res.data);
     } catch (err) {
       console.error("fetchProfile err", err);
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   // refresh access token using refresh cookie
   const refreshAccessToken = async () => {
     try {
-      const res = await api.post("/auth/refresh"); // cookie automatically sent
+      const res = await api.post("api/auth/refresh"); // cookie automatically sent
       const { accessToken: newToken } = res.data;
       if (newToken) {
         setToken(newToken);
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
 
   // login
   const login = async ({ username, password }) => {
-    const res = await api.post("/auth/login", { username, password });
+    const res = await api.post("api/auth/login", { username, password });
     const { accessToken: token, id, name, email, username: uname } = res.data;
     setToken(token);
     setUser({ id, name, email, username: uname });
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
 
   // register
   const register = async (payload) => {
-    const res = await api.post("/auth/register", payload);
+    const res = await api.post("api/auth/register", payload);
     // backend sets refresh cookie and returns access token
     const { accessToken: token, id, name, email, username } = res.data;
     if (token) {
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   // logout
   const logout = async () => {
     try {
-      await api.post("/auth/logout"); // backend clears cookie + DB
+      await api.post("api/auth/logout"); // backend clears cookie + DB
     } catch (err) {
       // ignore
     }
@@ -80,12 +80,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.post("/auth/refresh");
+        const res = await api.post("api/auth/refresh");
         const newToken = res.data.accessToken;
         if (newToken) {
           setToken(newToken);
           // fetch profile after token set
-          const profile = await api.get("/auth/profile");
+          const profile = await api.get("api/auth/profile");
           setUser(profile.data);
         }
       } catch (err) {

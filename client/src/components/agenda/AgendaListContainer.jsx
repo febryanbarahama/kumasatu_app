@@ -30,13 +30,13 @@ export default function AgendaListContainer() {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
   /* ================= FETCH DATA ================= */
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/agenda");
+      const res = await api.get("api/agenda");
       setData(res.data || []);
     } catch {
       showToast("Gagal mengambil data agenda", "error");
@@ -150,7 +150,7 @@ export default function AgendaListContainer() {
     setDeleting(true);
     try {
       if (confirm.mode === "single") {
-        await api.delete(`/agenda/${confirm.targetId}`);
+        await api.delete(`api/agenda/${confirm.targetId}`);
         showToast("Agenda berhasil dihapus");
       }
 

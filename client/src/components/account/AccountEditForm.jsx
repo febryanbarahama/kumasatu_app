@@ -22,7 +22,7 @@ export default function AccountEditForm({
     setSaving(true);
 
     try {
-      await api.put("/auth/update", form);
+      await api.put("api/auth/update", form);
       onSuccess("Informasi akun berhasil diperbarui.");
       refreshUser();
     } catch (err) {

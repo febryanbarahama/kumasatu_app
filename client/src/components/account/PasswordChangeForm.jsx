@@ -39,7 +39,7 @@ export default function PasswordChangeForm() {
     setSaving(true);
 
     try {
-      await api.put("/auth/change-password", {
+      await api.put("api/auth/change-password", {
         password_lama: form.current_password,
         password_baru: form.new_password,
       });

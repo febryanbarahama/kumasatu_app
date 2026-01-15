@@ -39,7 +39,7 @@ export default function AdministrasiListContainer() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/administrasi");
+      const res = await api.get("api/administrasi");
       setData(res.data || []);
     } catch {
       showToast("Gagal mengambil data layanan administrasi", "error");
@@ -151,7 +151,7 @@ export default function AdministrasiListContainer() {
 
       await Promise.all(
         ids.map((id) =>
-          api.put(`/administrasi/${id}`, {
+          api.put(`api/administrasi/${id}`, {
             status: confirm.action,
           })
         )
