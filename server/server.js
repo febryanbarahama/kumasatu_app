@@ -56,16 +56,16 @@ app.get("/", (req, res) => {
 });
 
 /* ===================== ROUTES ===================== */
-// app.use("/api/auth", authRoutes);
-// app.use("/api/keluarga", keluargaRoutes);
-// app.use("/api/individu", individuRoutes);
-// app.use("/api/dashboard", dashboardRoutes);
-// app.use("/api/berita", beritaRoutes);
-// app.use("/api/agenda", agendaRoutes);
-// app.use("/api/galeri", galeriRoutes);
-// app.use("/api/aparatur", aparaturRoutes);
-// app.use("/api/administrasi", administrasiRoutes);
-// app.use("/api/pengaduan", pengaduanRoutes);
-// app.use("/api/upload", uploadRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/keluarga", keluargaRoutes);
+app.use("/api/individu", individuRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/berita", beritaRoutes);
+app.use("/api/agenda", agendaRoutes);
+app.use("/api/galeri", galeriRoutes);
+app.use("/api/aparatur", aparaturRoutes);
+app.use("/api/administrasi", administrasiRoutes);
+app.use("/api/pengaduan", pengaduanRoutes);
+app.use("/api/upload", uploadRoutes);
 
 export default app;
