@@ -1,6 +1,5 @@
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./src/routes/authRoutes.js";
@@ -19,32 +18,40 @@ dotenv.config();
 
 const app = express();
 
-/* ===================== TRUST PROXY ===================== */
+/* ===================== TRUST PROXY (WAJIB DI VERCEL) ===================== */
 app.set("trust proxy", 1);
 
-/* ===================== CORS ===================== */
+/* ===================== CORS (MANUAL & VERCEL SAFE) ===================== */
 const allowedOrigins = [
   "http://localhost:5173",
   "https://admin.pemkampkuma1.id",
   "https://pemkampkuma1.id",
 ];
 
-const corsOptions = {
-  origin(origin, callback) {
-    if (!origin) return callback(null, origin);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, origin); // ⬅️ WAJIB origin string
-    }
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
 
-    return callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
 
-app.use(cors(corsOptions));
+  // 🔴 KUNCI UTAMA: STOP PREFLIGHT DI SINI
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 /* ===================== MIDDLEWARE ===================== */
 app.use(express.json({ limit: "20mb" }));
