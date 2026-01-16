@@ -19,40 +19,44 @@ dotenv.config();
 
 const app = express();
 
-/* TRUST PROXY (WAJIB DI VERCEL) */
+/* ===================== TRUST PROXY ===================== */
 app.set("trust proxy", 1);
 
-/* CORS */
+/* ===================== CORS ===================== */
 const allowedOrigins = [
   "http://localhost:5173",
   "https://admin.pemkampkuma1.id",
   "https://pemkampkuma1.id",
 ];
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, origin);
 
-/* MIDDLEWARE */
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin); // ⬅️ WAJIB origin string
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+
+/* ===================== MIDDLEWARE ===================== */
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 app.use(cookieParser());
 
-/* HEALTH CHECK */
+/* ===================== HEALTH CHECK ===================== */
 app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Backend is running" });
 });
 
-/* ROUTES */
+/* ===================== ROUTES ===================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/keluarga", keluargaRoutes);
 app.use("/api/individu", individuRoutes);
