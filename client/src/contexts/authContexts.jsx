@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api, { attachToken } from "../api/config.js";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -10,119 +10,113 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // helper: set token and header
+  /* =========================
+     HELPERS
+  ========================= */
+
   const setToken = (token) => {
     setAccessToken(token);
     attachToken(token);
   };
 
-  // fetch profile using current access token
-  const fetchProfile = async () => {
-    if (!accessToken) return;
-    try {
-      const res = await api.get("api/auth/profile"); // uses Authorization header
-      setUser(res.data);
-    } catch (err) {
-      console.error("fetchProfile err", err);
-    }
+  const clearAuth = () => {
+    setAccessToken(null);
+    setUser(null);
+    attachToken(null);
   };
 
-  // refresh access token using refresh cookie
-  const refreshAccessToken = async () => {
-    try {
-      const res = await api.post("api/auth/refresh"); // cookie automatically sent
-      const { accessToken: newToken } = res.data;
-      if (newToken) {
-        setToken(newToken);
-        return newToken;
-      }
-    } catch (err) {
-      console.log("refresh failed", err?.response?.data || err);
-      setToken(null);
-      setUser(null);
-    }
-    return null;
-  };
+  /* =========================
+     AUTH ACTIONS
+  ========================= */
 
-  // login
+  // LOGIN
   const login = async ({ username, password }) => {
-    const res = await api.post("api/auth/login", { username, password });
+    const res = await api.post("/api/auth/login", {
+      username,
+      password,
+    });
+
     const { accessToken: token, id, name, email, username: uname } = res.data;
+
     setToken(token);
-    setUser({ id, name, email, username: uname });
+    setUser({
+      id,
+      name,
+      email,
+      username: uname,
+    });
+
     return res.data;
   };
 
-  // register
+  // REGISTER
   const register = async (payload) => {
-    const res = await api.post("api/auth/register", payload);
-    // backend sets refresh cookie and returns access token
+    const res = await api.post("/api/auth/register", payload);
+
     const { accessToken: token, id, name, email, username } = res.data;
+
     if (token) {
       setToken(token);
       setUser({ id, name, email, username });
     }
+
     return res.data;
   };
 
-  // logout
+  // LOGOUT
   const logout = async () => {
     try {
-      await api.post("api/auth/logout"); // backend clears cookie + DB
+      await api.post("/api/auth/logout");
     } catch (err) {
-      // ignore
+      // ignore server error
+    } finally {
+      clearAuth();
     }
-    setToken(null);
-    setUser(null);
   };
 
-  // on mount: try refresh token to get accessToken (silent auth)
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.post("api/auth/refresh");
-        const newToken = res.data.accessToken;
-        if (newToken) {
-          setToken(newToken);
-          // fetch profile after token set
-          const profile = await api.get("api/auth/profile");
-          setUser(profile.data);
-        }
-      } catch (err) {
-        // not logged in
-      } finally {
-        setLoading(false);
-      }
-    })();
-    // eslint-disable-next-line
-  }, []);
-
-  // helper to call protected API; will auto-refresh on 401 then retry (optional)
-  const requestWithAutoRefresh = async (fn) => {
+  // FETCH PROFILE (protected endpoint)
+  const fetchProfile = async () => {
     try {
-      return await fn();
+      const res = await api.get("/api/auth/profile");
+      setUser(res.data);
+      return res.data;
     } catch (err) {
-      if (err.response && err.response.status === 401) {
-        const newToken = await refreshAccessToken();
-        if (newToken) {
-          return await fn(); // retry original fn
-        }
-      }
+      console.error("fetchProfile error:", err);
+      clearAuth();
       throw err;
     }
   };
 
+  /* =========================
+     INIT (CLIENT SIDE)
+  ========================= */
+
+  useEffect(() => {
+    /**
+     * NOTE:
+     * - Jangan call /refresh di sini
+     * - Axios interceptor akan handle refresh otomatis
+     */
+    setLoading(false);
+  }, []);
+
+  /* =========================
+     CONTEXT VALUE
+  ========================= */
+
   return (
     <AuthContext.Provider
       value={{
-        accessToken,
         user,
+        accessToken,
         loading,
+
         login,
         register,
         logout,
-        refreshAccessToken,
-        requestWithAutoRefresh,
+        fetchProfile,
+
+        isAuthenticated: !!user,
       }}
     >
       {children}

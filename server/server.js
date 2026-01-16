@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
 import authRoutes from "./src/routes/authRoutes.js";
 import keluargaRoutes from "./src/routes/keluargaRoutes.js";
 import individuRoutes from "./src/routes/individuRoutes.js";
@@ -18,41 +19,48 @@ dotenv.config();
 
 const app = express();
 
-// ===================== CORS =====================
+/* ===================== TRUST PROXY (WAJIB DI VERCEL) ===================== */
+app.set("trust proxy", 1);
+
+/* ===================== CORS ===================== */
 const allowedOrigins = [
   "http://localhost:5173",
   "https://admin.pemkampkuma1.id",
   "https://pemkampkuma1.id",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // allow Postman, curl, server-to-server
+    if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, origin); // ⬅️ PENTING
-      }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin); // ⬅️ HARUS return origin
+    }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+    return callback(new Error("CORS not allowed"), false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-// ===================== MIDDLEWARE =====================
+app.use(cors(corsOptions));
+
+/* ===================== PREFLIGHT (PALING PENTING) ===================== */
+app.options("*", cors(corsOptions));
+
+/* ===================== MIDDLEWARE ===================== */
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 app.use(cookieParser());
 
-// ===================== HEALTH CHECK =====================
+/* ===================== HEALTH CHECK ===================== */
 app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Backend is running" });
 });
 
-// ===================== ROUTES =====================
+/* ===================== ROUTES ===================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/keluarga", keluargaRoutes);
 app.use("/api/individu", individuRoutes);
