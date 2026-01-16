@@ -19,7 +19,7 @@ dotenv.config();
 
 const app = express();
 
-/* ===================== TRUST PROXY (WAJIB DI VERCEL) ===================== */
+/* ===================== TRUST PROXY ===================== */
 app.set("trust proxy", 1);
 
 /* ===================== CORS ===================== */
@@ -30,12 +30,12 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-  origin: (origin, callback) => {
+  origin(origin, callback) {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
-      return callback(null, origin);
+      return callback(null, true);
     }
-    return callback(new Error("CORS not allowed"), false);
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -43,13 +43,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
 /* ===================== MIDDLEWARE ===================== */
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
