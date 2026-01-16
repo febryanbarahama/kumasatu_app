@@ -31,13 +31,10 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // allow Postman, curl, server-to-server
     if (!origin) return callback(null, true);
-
     if (allowedOrigins.includes(origin)) {
-      return callback(null, origin); // ⬅️ HARUS return origin
+      return callback(null, origin);
     }
-
     return callback(new Error("CORS not allowed"), false);
   },
   credentials: true,
@@ -47,8 +44,13 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-/* ===================== PREFLIGHT (PALING PENTING) ===================== */
-app.options("*", cors(corsOptions));
+/* ===== FIX PREFLIGHT (VERCEL SAFE) ===== */
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors(corsOptions)(req, res, next);
+  }
+  next();
+});
 
 /* ===================== MIDDLEWARE ===================== */
 app.use(express.json({ limit: "20mb" }));
