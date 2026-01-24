@@ -1,4 +1,6 @@
-import db from "../config/db.js";
+import getPool from "../config/db.js";
+
+const db = getPool();
 
 /**
  * ENUM status yang diperbolehkan
@@ -13,8 +15,9 @@ const ALLOWED_STATUS = ["menunggu", "diproses", "selesai", "ditolak"];
 export const getAllPengaduan = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM lyn_pengaduan ORDER BY id DESC"
+      "SELECT * FROM lyn_pengaduan ORDER BY id DESC",
     );
+
     return res.status(200).json(rows);
   } catch (error) {
     console.error("❌ getAllPengaduan:", error);
@@ -35,7 +38,7 @@ export const getPengaduanById = async (req, res) => {
 
     const [rows] = await db.query(
       "SELECT * FROM lyn_pengaduan WHERE id = ? LIMIT 1",
-      [id]
+      [id],
     );
 
     if (!rows.length) {
@@ -55,8 +58,7 @@ export const getPengaduanById = async (req, res) => {
 
 /**
  * =========================
- * CREATE pengaduan
- * (public API)
+ * CREATE pengaduan (PUBLIC)
  * =========================
  */
 export const createPengaduan = async (req, res) => {
@@ -75,7 +77,7 @@ export const createPengaduan = async (req, res) => {
     }
 
     // =========================
-    // AMBIL FILE DARI CLOUDINARY
+    // FILE DARI CLOUDINARY
     // =========================
     const lampiran = {
       foto: req.files?.lampiran_foto?.map((file) => file.path) || [],
@@ -84,7 +86,7 @@ export const createPengaduan = async (req, res) => {
     };
 
     // =========================
-    // INSERT DB
+    // INSERT DATABASE
     // =========================
     const [result] = await db.query(
       `
@@ -113,7 +115,7 @@ export const createPengaduan = async (req, res) => {
         judul_pengaduan,
         isi_pengaduan,
         JSON.stringify(lampiran),
-      ]
+      ],
     );
 
     return res.status(201).json({
@@ -171,7 +173,7 @@ export const updatePengaduan = async (req, res) => {
 
     const [result] = await db.query(query, params);
 
-    if (result.affectedRows === 0) {
+    if (!result.affectedRows) {
       return res.status(404).json({
         message: "Data pengaduan tidak ditemukan",
       });
@@ -201,7 +203,7 @@ export const deletePengaduan = async (req, res) => {
       id,
     ]);
 
-    if (result.affectedRows === 0) {
+    if (!result.affectedRows) {
       return res.status(404).json({
         message: "Data pengaduan tidak ditemukan",
       });

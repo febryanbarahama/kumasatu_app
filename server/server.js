@@ -24,6 +24,7 @@ app.set("trust proxy", 1);
 /* ===================== CORS (MANUAL & VERCEL SAFE) ===================== */
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:3000",
   "https://admin.pemkampkuma1.id",
   "https://pemkampkuma1.id",
 ];
@@ -38,11 +39,11 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
   );
   res.setHeader(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS"
+    "GET, POST, PUT, DELETE, OPTIONS",
   );
 
   // 🔴 KUNCI UTAMA: STOP PREFLIGHT DI SINI

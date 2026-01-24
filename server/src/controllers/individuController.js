@@ -1,5 +1,7 @@
-import db from "../config/db.js";
+import getPool from "../config/db.js";
 import XLSX from "xlsx";
+
+const db = getPool();
 
 /* =======================
    Helper: SET <-> Array
@@ -164,7 +166,7 @@ export const deleteIndividu = async (req, res) => {
 };
 
 /* ======================================================
-   IMPORT INDIVIDU (CSV / XLSX) — VERCEL SAFE
+   IMPORT INDIVIDU (CSV / XLSX) — TRANSACTION SAFE
 ====================================================== */
 export const importIndividu = async (req, res) => {
   if (!req.file) {
@@ -204,7 +206,7 @@ export const importIndividu = async (req, res) => {
 
       const [[kk]] = await conn.query(
         "SELECT no_kk FROM keluarga WHERE no_kk = ?",
-        [r.no_kk]
+        [r.no_kk],
       );
 
       if (!kk) {
@@ -255,7 +257,7 @@ export const importIndividu = async (req, res) => {
             r.kali_rawat_inap || null,
             joinSetField(r.tempat_rawat_inap),
             r.catatan || null,
-          ]
+          ],
         );
 
         success++;

@@ -1,4 +1,6 @@
-import db from "../config/db.js";
+import getPool from "../config/db.js";
+
+const db = getPool();
 
 /**
  * ENUM status yang diperbolehkan
@@ -13,8 +15,9 @@ const ALLOWED_STATUS = ["menunggu", "diproses", "selesai", "ditolak"];
 export const getAllAdministrasi = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM lyn_administrasi ORDER BY id DESC"
+      "SELECT * FROM lyn_administrasi ORDER BY id DESC",
     );
+
     res.status(200).json(rows);
   } catch (error) {
     console.error("❌ getAllAdministrasi:", error);
@@ -33,7 +36,7 @@ export const getAdministrasiById = async (req, res) => {
 
     const [rows] = await db.query(
       "SELECT * FROM lyn_administrasi WHERE id = ? LIMIT 1",
-      [id]
+      [id],
     );
 
     if (!rows.length) {
@@ -80,12 +83,10 @@ export const createAdministrasi = async (req, res) => {
     }
 
     // =========================
-    // AMBIL FILE DARI CLOUDINARY
+    // FILE DARI CLOUDINARY
     // =========================
     const lampiran_ktp = req.files?.lampiran_ktp?.[0]?.path || null;
-
     const lampiran_kk = req.files?.lampiran_kk?.[0]?.path || null;
-
     const lampiran_lainnya = req.files?.lampiran_lainnya?.[0]?.path || null;
 
     // =========================
@@ -128,7 +129,7 @@ export const createAdministrasi = async (req, res) => {
         lampiran_ktp,
         lampiran_kk,
         lampiran_lainnya,
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -161,8 +162,8 @@ export const updateAdministrasi = async (req, res) => {
       return res.status(400).json({ message: "Status tidak valid" });
     }
 
-    let query = "";
-    let params = [];
+    let query;
+    let params;
 
     if (status === "selesai") {
       query = `
@@ -208,7 +209,7 @@ export const deleteAdministrasi = async (req, res) => {
 
     const [result] = await db.query(
       "DELETE FROM lyn_administrasi WHERE id = ?",
-      [id]
+      [id],
     );
 
     if (!result.affectedRows) {

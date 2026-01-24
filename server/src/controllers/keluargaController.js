@@ -1,5 +1,7 @@
-import db from "../config/db.js";
+import getPool from "../config/db.js";
 import XLSX from "xlsx";
+
+const db = getPool();
 
 /* =======================
    Helper WKT POINT
@@ -78,7 +80,7 @@ export const createKeluarga = async (req, res) => {
     if (lokasiWkt) {
       await db.query(
         "INSERT INTO keluarga SET ?, lokasi = ST_GeomFromText(?)",
-        [data, lokasiWkt]
+        [data, lokasiWkt],
       );
     } else {
       await db.query("INSERT INTO keluarga SET ?", [data]);
@@ -115,7 +117,7 @@ export const updateKeluarga = async (req, res) => {
     if (lokasiWkt) {
       [result] = await db.query(
         "UPDATE keluarga SET ?, lokasi = ST_GeomFromText(?) WHERE no_kk = ?",
-        [data, lokasiWkt, no_kk]
+        [data, lokasiWkt, no_kk],
       );
     } else {
       [result] = await db.query("UPDATE keluarga SET ? WHERE no_kk = ?", [
@@ -234,7 +236,7 @@ export const importKeluarga = async (req, res) => {
         if (lokasi) {
           await db.query(
             "INSERT INTO keluarga SET ?, lokasi = ST_GeomFromText(?)",
-            [data, lokasi]
+            [data, lokasi],
           );
         } else {
           await db.query("INSERT INTO keluarga SET ?", [data]);
