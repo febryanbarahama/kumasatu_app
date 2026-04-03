@@ -28,7 +28,7 @@ export default function BeritaForm({ isEdit }) {
   useEffect(() => {
     if (isEdit && id) {
       api
-        .get(`/berita/${id}`)
+        .get(`/api/berita/${id}`)
         .then((res) => {
           const data = res.data;
 
@@ -45,8 +45,7 @@ export default function BeritaForm({ isEdit }) {
 
           // --- Preview Gambar ---
           if (data.image) {
-            const baseURL =
-              import.meta.env.VITE_API_URL || "http://localhost:5000";
+            const baseURL = import.meta.env.VITE_API_BASE_URL;
             setPreviewImage(`${baseURL}${data.image}`);
           } else {
             setPreviewImage("");
@@ -100,7 +99,7 @@ export default function BeritaForm({ isEdit }) {
       formData.append("image", file);
 
       // Upload ke server
-      const res = await api.post("/upload/image", formData, {
+      const res = await api.post("/api/upload/image", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -134,10 +133,10 @@ export default function BeritaForm({ isEdit }) {
 
     try {
       if (isEdit) {
-        await api.put(`/berita/${id}`, form);
+        await api.put(`/api/berita/${id}`, form);
         showToast("Berita berhasil diperbarui", "success");
       } else {
-        await api.post("/berita", form);
+        await api.post("/api/berita", form);
         showToast("Berita berhasil ditambahkan", "success");
       }
 

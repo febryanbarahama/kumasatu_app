@@ -15,7 +15,7 @@ export default function AccountInfoForm() {
 
   const fetchAccount = async () => {
     try {
-      const res = await api.get("api/auth/profile");
+      const res = await api.get("/api/auth/me");
       setForm({
         username: res.data.username || "",
         email: res.data.email || "",
@@ -40,7 +40,7 @@ export default function AccountInfoForm() {
     setSaving(true);
 
     try {
-      await api.put("api/auth/update", form);
+      await api.put("/api/auth/me", form);
       setSuccessMessage("Informasi akun berhasil diperbarui!");
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memperbarui akun.");

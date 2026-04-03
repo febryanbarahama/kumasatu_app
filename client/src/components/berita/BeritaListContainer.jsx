@@ -30,13 +30,13 @@ export default function BeritaListContainer() {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
   /* ================= FETCH DATA ================= */
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/berita");
+      const res = await api.get("/api/berita");
       setData(res.data || []);
     } catch {
       showToast("Gagal mengambil data", "error");
@@ -76,7 +76,7 @@ export default function BeritaListContainer() {
         (i) =>
           (i.title || "").toLowerCase().includes(q) ||
           (i.excerpt || "").toLowerCase().includes(q) ||
-          (i.category || "").toLowerCase().includes(q)
+          (i.category || "").toLowerCase().includes(q),
       );
     }
 
@@ -156,7 +156,7 @@ export default function BeritaListContainer() {
 
       if (confirm.mode === "bulk") {
         await Promise.all(
-          Array.from(selected).map((id) => api.delete(`/berita/${id}`))
+          Array.from(selected).map((id) => api.delete(`/api/berita/${id}`)),
         );
         showToast("Berita terpilih berhasil dihapus");
       }

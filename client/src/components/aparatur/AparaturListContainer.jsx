@@ -29,13 +29,13 @@ export default function AparaturListContainer() {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
   /* ================= FETCH DATA ================= */
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/aparatur");
+      const res = await api.get("api/aparatur");
       setData(res.data || []);
     } catch {
       showToast("Gagal mengambil data aparatur", "error");
@@ -64,7 +64,7 @@ export default function AparaturListContainer() {
         (i) =>
           (i.nama || "").toLowerCase().includes(q) ||
           (i.jabatan || "").toLowerCase().includes(q) ||
-          (i.email || "").toLowerCase().includes(q)
+          (i.email || "").toLowerCase().includes(q),
       );
     }
 
@@ -138,13 +138,13 @@ export default function AparaturListContainer() {
     setDeleting(true);
     try {
       if (confirm.mode === "single") {
-        await api.delete(`/aparatur/${confirm.targetId}`);
+        await api.delete(`api/aparatur/${confirm.targetId}`);
         showToast("Aparatur berhasil dihapus");
       }
 
       if (confirm.mode === "bulk") {
         await Promise.all(
-          Array.from(selected).map((id) => api.delete(`/aparatur/${id}`))
+          Array.from(selected).map((id) => api.delete(`api/aparatur/${id}`)),
         );
         showToast("Aparatur terpilih berhasil dihapus");
       }

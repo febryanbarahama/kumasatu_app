@@ -40,13 +40,13 @@ export default function AparaturForm({ isEdit }) {
   const [loadingPreview, setLoadingPreview] = useState(false);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
   /* ================= FETCH DATA (EDIT) ================= */
   useEffect(() => {
     if (isEdit && id) {
       api
-        .get(`/aparatur/${id}`)
+        .get(`api/aparatur/${id}`)
         .then((res) => {
           const data = res.data;
           const jabatanDb = data.jabatan || "";
@@ -127,7 +127,7 @@ export default function AparaturForm({ isEdit }) {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await api.post("/upload/image", formData, {
+      const res = await api.post("api/upload/image", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -155,10 +155,10 @@ export default function AparaturForm({ isEdit }) {
 
     try {
       if (isEdit) {
-        await api.put(`/aparatur/${id}`, form);
+        await api.put(`api/aparatur/${id}`, form);
         showToast("Data aparatur berhasil diperbarui");
       } else {
-        await api.post("/aparatur", form);
+        await api.post("api/aparatur", form);
         showToast("Data aparatur berhasil ditambahkan");
       }
 

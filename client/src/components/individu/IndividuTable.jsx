@@ -3,11 +3,27 @@ import { FiEdit2, FiTrash2 } from "react-icons/fi";
 
 export default function IndividuTable({
   data,
+  loading,
   onEdit,
   onDelete,
   onToggleSelect,
   selected = new Set(),
 }) {
+  if (loading) {
+    return Array.from({ length: 8 }).map((_, idx) => (
+      <tr key={idx} className="animate-pulse">
+        {Array.from({ length: 28 }).map((__, i) => (
+          <td
+            key={i}
+            className="px-4 py-3 border-b border-gray-300 dark:border-gray-700"
+          >
+            <div className="h-4 bg-gray-300 rounded dark:bg-gray-700"></div>
+          </td>
+        ))}
+      </tr>
+    ));
+  }
+
   if (!data.length)
     return (
       <tr>

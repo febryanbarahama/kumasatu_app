@@ -30,13 +30,13 @@ export default function GaleriListContainer() {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
   /* ================= FETCH ================= */
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/galeri");
+      const res = await api.get("api/galeri");
       setData(res.data || []);
     } catch {
       showToast("Gagal memuat data galeri", "error");
@@ -76,7 +76,7 @@ export default function GaleriListContainer() {
         (i) =>
           (i.title || "").toLowerCase().includes(q) ||
           (i.category || "").toLowerCase().includes(q) ||
-          (i.author || "").toLowerCase().includes(q)
+          (i.author || "").toLowerCase().includes(q),
       );
     }
 
@@ -150,13 +150,13 @@ export default function GaleriListContainer() {
     setDeleting(true);
     try {
       if (confirm.mode === "single") {
-        await api.delete(`/galeri/${confirm.targetId}`);
+        await api.delete(`api/galeri/${confirm.targetId}`);
         showToast("Galeri berhasil dihapus");
       }
 
       if (confirm.mode === "bulk") {
         await Promise.all(
-          Array.from(selected).map((id) => api.delete(`/galeri/${id}`))
+          Array.from(selected).map((id) => api.delete(`api/galeri/${id}`)),
         );
         showToast("Galeri terpilih berhasil dihapus");
       }

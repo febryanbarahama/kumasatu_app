@@ -23,13 +23,13 @@ export default function GaleriForm({ isEdit }) {
   const [loadingPreview, setLoadingPreview] = useState(false);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
   /* ================= FETCH DATA (EDIT) ================= */
   useEffect(() => {
     if (isEdit && id) {
       api
-        .get(`/galeri/${id}`)
+        .get(`api/galeri/${id}`)
         .then((res) => {
           const data = res.data;
 
@@ -84,7 +84,7 @@ export default function GaleriForm({ isEdit }) {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await api.post("/upload/image", formData, {
+      const res = await api.post("api/upload/image", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -113,10 +113,10 @@ export default function GaleriForm({ isEdit }) {
 
     try {
       if (isEdit) {
-        await api.put(`/galeri/${id}`, form);
+        await api.put(`api/galeri/${id}`, form);
         showToast("Galeri berhasil diperbarui");
       } else {
-        await api.post("/galeri", form);
+        await api.post("api/galeri", form);
         showToast("Galeri berhasil ditambahkan");
       }
 

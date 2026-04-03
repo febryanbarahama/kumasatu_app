@@ -13,14 +13,12 @@ export default function KeluargaListContainer() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // UI state
   const [filterLindongan, setFilterLindongan] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selected, setSelected] = useState(new Set());
 
-  // confirm dialog
   const [confirm, setConfirm] = useState({
     open: false,
     mode: null,
@@ -31,15 +29,22 @@ export default function KeluargaListContainer() {
 
   const fileInputRef = useRef(null);
 
+  /* =========================
+     FETCH DATA (IMPROVED)
+  ========================= */
   const fetchKeluarga = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/keluarga");
-      setKeluarga(res.data || []);
-      setError(null);
+      const res = await api.get("/api/keluarga");
+
+      // smooth loading (anti flicker)
+      setTimeout(() => {
+        setKeluarga(res.data || []);
+        setError(null);
+        setLoading(false);
+      }, 300);
     } catch {
       setError("Gagal memuat data keluarga.");
-    } finally {
       setLoading(false);
     }
   };
@@ -49,21 +54,27 @@ export default function KeluargaListContainer() {
     fetchKeluarga();
   }, []);
 
-  // filtering
+  /* =========================
+     FILTERING
+  ========================= */
   const filtered = useMemo(() => {
     let data = [...keluarga];
-    if (filterLindongan)
+
+    if (filterLindongan) {
       data = data.filter((it) => it.lindongan === filterLindongan);
+    }
 
     const q = (searchTerm || "").trim().toLowerCase();
+
     if (q) {
       data = data.filter(
         (item) =>
           (item.no_kk || "").toLowerCase().includes(q) ||
           (item.nama_kk || "").toLowerCase().includes(q) ||
-          (item.nik_kk || "").toLowerCase().includes(q)
+          (item.nik_kk || "").toLowerCase().includes(q),
       );
     }
+
     return data;
   }, [keluarga, filterLindongan, searchTerm]);
 
@@ -78,7 +89,9 @@ export default function KeluargaListContainer() {
     return filtered.slice(start, start + perPage);
   }, [filtered, currentPage, perPage]);
 
-  // selection
+  /* =========================
+     SELECTION
+  ========================= */
   const toggleSelect = (id) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -89,37 +102,41 @@ export default function KeluargaListContainer() {
 
   const selectAllPage = () => {
     const ids = currentItems.map((i) => i.no_kk);
+
     setSelected((prev) => {
       const next = new Set(prev);
-      const all = ids.every((id) => next.has(id));
-      ids.forEach((id) => (all ? next.delete(id) : next.add(id)));
+      const allSelected = ids.every((id) => next.has(id));
+
+      ids.forEach((id) => (allSelected ? next.delete(id) : next.add(id)));
+
       return next;
     });
   };
 
   const clearSelection = () => setSelected(new Set());
 
-  // ===== DELETE HANDLERS (TIDAK DIUBAH, HANYA DIPANGGIL DARI CONFIRM) =====
-
+  /* =========================
+     DELETE
+  ========================= */
   const handleDeleteSingle = async (no_kk) => {
-    setLoading(true);
+    setDeleting(true);
     try {
-      await api.delete(`/keluarga/${no_kk}`);
+      await api.delete(`/api/keluarga/${no_kk}`);
       setSuccessMessage("Data keluarga berhasil dihapus.");
       await fetchKeluarga();
       clearSelection();
     } catch {
       setError("Gagal menghapus data.");
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    setLoading(true);
+    setDeleting(true);
     try {
       await Promise.all(
-        Array.from(selected).map((id) => api.delete(`/keluarga/${id}`))
+        Array.from(selected).map((id) => api.delete(`/api/keluarga/${id}`)),
       );
       setSuccessMessage("Data terpilih berhasil dihapus.");
       await fetchKeluarga();
@@ -127,14 +144,13 @@ export default function KeluargaListContainer() {
     } catch {
       setError("Gagal menghapus beberapa data.");
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
-  // ===== OPEN CONFIRM =====
-
   const confirmDeleteSingle = (no_kk) => {
     const item = keluarga.find((k) => k.no_kk === no_kk);
+
     setConfirm({
       open: true,
       mode: "single",
@@ -146,7 +162,8 @@ export default function KeluargaListContainer() {
   };
 
   const confirmDeleteBulk = () => {
-    if (selected.size === 0) return;
+    if (!selected.size) return;
+
     setConfirm({
       open: true,
       mode: "bulk",
@@ -157,34 +174,40 @@ export default function KeluargaListContainer() {
   const handleConfirm = async () => {
     if (confirm.mode === "single") {
       await handleDeleteSingle(confirm.payload.no_kk);
-    } else if (confirm.mode === "bulk") {
+    } else {
       await handleBulkDelete();
     }
 
     setConfirm({ open: false, mode: null, payload: null });
+
     setTimeout(() => {
       setSuccessMessage(null);
       setError(null);
     }, 3000);
   };
 
-  // import excel (AS-IS, TIDAK DIUBAH)
+  /* =========================
+     IMPORT
+  ========================= */
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const formData = new FormData();
     formData.append("file", file);
+
     setLoading(true);
 
     try {
-      await api.post("/keluarga/import", formData, {
+      await api.post("/api/keluarga/import", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       setSuccessMessage("Import data berhasil!");
       await fetchKeluarga();
+
       if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (err) {
+    } catch {
       setError("Gagal import data.");
     } finally {
       setLoading(false);
@@ -193,16 +216,12 @@ export default function KeluargaListContainer() {
 
   const lindonganOptions = useMemo(
     () => Array.from(new Set(keluarga.map((i) => i.lindongan))).filter(Boolean),
-    [keluarga]
+    [keluarga],
   );
 
-  if (loading)
-    return (
-      <p className="mt-8 text-center text-gray-700 dark:text-gray-300">
-        Loading data keluarga...
-      </p>
-    );
-
+  /* =========================
+     RENDER
+  ========================= */
   return (
     <div>
       <div className="mb-6">
@@ -217,6 +236,7 @@ export default function KeluargaListContainer() {
         type="success"
         onClose={() => setSuccessMessage(null)}
       />
+
       <Notification
         message={error}
         type="error"
@@ -243,7 +263,7 @@ export default function KeluargaListContainer() {
             <select
               value={perPage}
               onChange={(e) => setPerPage(Number(e.target.value))}
-              className="px-2 py-1 ml-2 border rounded dark:bg-gray-700 dark:text-gray-100"
+              className="px-2 py-1 border rounded dark:bg-gray-700 dark:text-gray-100"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -260,12 +280,9 @@ export default function KeluargaListContainer() {
         onDelete={confirmDeleteBulk}
       />
 
-      <div
-        className="overflow-x-auto border border-gray-300 rounded-lg dark:border-gray-700"
-        style={{ scrollbarWidth: "thin", scrollbarColor: "#9CA3AF #E5E7EB" }}
-      >
+      <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
         <table className="w-full text-sm border-collapse table-auto dark:text-gray-100">
-          <thead className="text-xs text-black uppercase bg-gray-100 border-b dark:text-white dark:bg-gray-700">
+          <thead className="text-xs uppercase bg-gray-100 border-b dark:bg-gray-700">
             <tr>
               <th className="px-4 py-2">
                 <input
@@ -277,45 +294,53 @@ export default function KeluargaListContainer() {
                   onChange={selectAllPage}
                 />
               </th>
-              <th className="px-4 py-2">No KK</th>
-              <th className="px-4 py-2">Nama KK</th>
-              <th className="px-4 py-2">NIK KK</th>
-              <th className="px-4 py-2">JK KK</th>
-              <th className="px-4 py-2">Lindongan</th>
-              <th className="px-4 py-2">Jumlah ART</th>
-              <th className="px-4 py-2">Status Bangunan</th>
-              <th className="px-4 py-2">Status Kepemilikan Tanah</th>
-              <th className="px-4 py-2">Luas Bangunan</th>
-              <th className="px-4 py-2">Luas Tanah</th>
-              <th className="px-4 py-2">Jenis Lantai</th>
-              <th className="px-4 py-2">Jenis Dinding</th>
-              <th className="px-4 py-2">Jenis Atap</th>
-              <th className="px-4 py-2">Fasilitas MCK</th>
-              <th className="px-4 py-2">Tempat Pembuangan Tinja</th>
-              <th className="px-4 py-2">Sumber Air Minum</th>
-              <th className="px-4 py-2">Sumber Air Mandi</th>
-              <th className="px-4 py-2">Sumber Penerangan</th>
-              <th className="px-4 py-2">Daya Listrik</th>
-              <th className="px-4 py-2">Bahan Bakar Memasak</th>
-              <th className="px-4 py-2">Aset</th>
-              <th className="px-4 py-2">Tanah Lain</th>
-              <th className="px-4 py-2">Penerima Bantuan</th>
-              <th className="px-4 py-2">Jenis Bantuan</th>
-              <th className="px-4 py-2">Lokasi X</th>
-              <th className="px-4 py-2">Lokasi Y</th>
-              <th className="px-4 py-2">Aksi</th>
+
+              {[
+                "No KK",
+                "Nama KK",
+                "NIK KK",
+                "JK KK",
+                "Lindongan",
+                "Jumlah ART",
+                "Status Bangunan",
+                "Status Kepemilikan Tanah",
+                "Luas Bangunan",
+                "Luas Tanah",
+                "Jenis Lantai",
+                "Jenis Dinding",
+                "Jenis Atap",
+                "Fasilitas MCK",
+                "Tempat Pembuangan Tinja",
+                "Sumber Air Minum",
+                "Sumber Air Mandi",
+                "Sumber Penerangan",
+                "Daya Listrik",
+                "Bahan Bakar Memasak",
+                "Aset",
+                "Tanah Lain",
+                "Penerima Bantuan",
+                "Jenis Bantuan",
+                "Lokasi X",
+                "Lokasi Y",
+                "Aksi",
+              ].map((h, i) => (
+                <th key={i} className="px-4 py-2">
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
+
           <tbody>
             <KeluargaTable
               data={currentItems}
+              loading={loading} // 🔥 INI KUNCI
               onEdit={(no_kk) =>
                 (window.location.href = `/dashboard/penduduk/keluarga/edit/${no_kk}`)
               }
               onDelete={confirmDeleteSingle}
               selected={selected}
               onToggleSelect={toggleSelect}
-              onSelectAllPage={selectAllPage}
             />
           </tbody>
         </table>
@@ -325,6 +350,7 @@ export default function KeluargaListContainer() {
         <div className="text-sm text-gray-600 dark:text-gray-400">
           Menampilkan <strong>{filtered.length}</strong> hasil
         </div>
+
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -337,15 +363,14 @@ export default function KeluargaListContainer() {
         title="Konfirmasi Hapus"
         message={
           confirm.mode === "single"
-            ? `Hapus keluarga dengan No KK ${confirm.payload?.no_kk} (${confirm.payload?.nama_kk})?`
-            : `Hapus ${confirm.payload?.count} data keluarga terpilih?`
+            ? `Hapus keluarga ${confirm.payload?.no_kk}?`
+            : `Hapus ${confirm.payload?.count} data?`
         }
         confirmText="Hapus"
         confirmVariant="danger"
         loading={deleting}
         onCancel={() => setConfirm({ open: false, mode: null, payload: null })}
         onConfirm={handleConfirm}
-        variant="danger"
       />
     </div>
   );

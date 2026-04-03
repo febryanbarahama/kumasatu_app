@@ -20,7 +20,7 @@ router.post(
       url: req.file.path, // URL Cloudinary
       public_id: req.file.filename,
     });
-  }
+  },
 );
 
 export default router;

@@ -74,7 +74,7 @@ export default function AdministrasiListContainer() {
         (i) =>
           (i.nama || "").toLowerCase().includes(q) ||
           (i.nik || "").includes(q) ||
-          (i.jenis_layanan || "").toLowerCase().includes(q)
+          (i.jenis_layanan || "").toLowerCase().includes(q),
       );
     }
 
@@ -153,8 +153,8 @@ export default function AdministrasiListContainer() {
         ids.map((id) =>
           api.put(`api/administrasi/${id}`, {
             status: confirm.action,
-          })
-        )
+          }),
+        ),
       );
 
       showToast("Status layanan berhasil diperbarui");

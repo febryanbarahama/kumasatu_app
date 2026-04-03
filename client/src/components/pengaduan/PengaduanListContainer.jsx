@@ -39,7 +39,7 @@ export default function PengaduanListContainer() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/pengaduan");
+      const res = await api.get("api/pengaduan");
       setData(res.data || []);
     } catch {
       showToast("Gagal mengambil data pengaduan", "error");
@@ -74,7 +74,7 @@ export default function PengaduanListContainer() {
         (i) =>
           (i.nama || "").toLowerCase().includes(q) ||
           (i.nik || "").includes(q) ||
-          (i.judul_pengaduan || "").toLowerCase().includes(q)
+          (i.judul_pengaduan || "").toLowerCase().includes(q),
       );
     }
 
@@ -151,10 +151,10 @@ export default function PengaduanListContainer() {
 
       await Promise.all(
         ids.map((id) =>
-          api.put(`/pengaduan/${id}`, {
+          api.put(`api/pengaduan/${id}`, {
             status: confirm.action,
-          })
-        )
+          }),
+        ),
       );
 
       showToast("Status pengaduan berhasil diperbarui");

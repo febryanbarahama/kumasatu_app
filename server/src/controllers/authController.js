@@ -13,7 +13,7 @@ const storeRefreshToken = async (token, userId) => {
   const pool = getPool();
   await pool.query(
     "INSERT INTO refresh_tokens (token, user_id, created_at) VALUES (?, ?, NOW())",
-    [token, userId]
+    [token, userId],
   );
 };
 
@@ -26,7 +26,7 @@ const findRefreshToken = async (token) => {
   const pool = getPool();
   const [rows] = await pool.query(
     "SELECT user_id FROM refresh_tokens WHERE token = ? LIMIT 1",
-    [token]
+    [token],
   );
   return rows[0];
 };
@@ -78,7 +78,7 @@ export const updateUser = async (req, res) => {
 
     const [[user]] = await pool.query(
       "SELECT id_pengguna FROM users WHERE id_pengguna = ? LIMIT 1",
-      [userId]
+      [userId],
     );
     if (!user) {
       return res.status(404).json({ message: "User tidak ditemukan" });
@@ -87,7 +87,7 @@ export const updateUser = async (req, res) => {
     const [exists] = await pool.query(
       `SELECT id_pengguna FROM users 
        WHERE (email = ? OR username = ?) AND id_pengguna != ? LIMIT 1`,
-      [email, username, userId]
+      [email, username, userId],
     );
     if (exists.length) {
       return res
@@ -97,7 +97,7 @@ export const updateUser = async (req, res) => {
 
     await pool.query(
       "UPDATE users SET email = ?, username = ? WHERE id_pengguna = ?",
-      [email, username, userId]
+      [email, username, userId],
     );
 
     res.json({ message: "Data akun berhasil diperbarui" });
@@ -122,7 +122,7 @@ export const changePassword = async (req, res) => {
 
     const [[user]] = await pool.query(
       "SELECT password FROM users WHERE id_pengguna = ? LIMIT 1",
-      [userId]
+      [userId],
     );
 
     if (!user) {
@@ -157,7 +157,7 @@ export const loginUser = async (req, res) => {
 
     const [[user]] = await pool.query(
       "SELECT * FROM users WHERE username = ? LIMIT 1",
-      [username]
+      [username],
     );
 
     if (!user) {

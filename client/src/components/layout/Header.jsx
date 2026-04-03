@@ -155,7 +155,7 @@ export default function Header({ themeMode, changeThemeMode, style }) {
                           : "text-gray-100"
                       }`}
                     >
-                      {user?.name || user?.username || "User"}
+                      {user?.username || "User"}
                     </p>
                     <p
                       className={`max-w-xs text-xs truncate ${

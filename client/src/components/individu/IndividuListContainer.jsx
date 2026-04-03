@@ -33,7 +33,7 @@ export default function IndividuListContainer() {
   const fetchIndividu = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/individu");
+      const res = await api.get("/api/individu");
       setIndividu(res.data || []);
       setError(null);
     } catch {
@@ -61,7 +61,7 @@ export default function IndividuListContainer() {
         (i) =>
           (i.nik || "").toLowerCase().includes(q) ||
           (i.nama || "").toLowerCase().includes(q) ||
-          (i.no_kk || "").toLowerCase().includes(q)
+          (i.no_kk || "").toLowerCase().includes(q),
       );
     }
     return data;
@@ -104,15 +104,15 @@ export default function IndividuListContainer() {
     setDeleting(true);
     try {
       if (confirm.mode === "single" && confirm.targetNik) {
-        await api.delete(`/individu/${confirm.targetNik}`);
+        await api.delete(`/api/individu/${confirm.targetNik}`);
         setSuccessMessage(
-          `Individu dengan NIK ${confirm.targetNik} berhasil dihapus.`
+          `Individu dengan NIK ${confirm.targetNik} berhasil dihapus.`,
         );
       }
 
       if (confirm.mode === "bulk") {
         await Promise.all(
-          Array.from(selected).map((nik) => api.delete(`/individu/${nik}`))
+          Array.from(selected).map((nik) => api.delete(`/api/individu/${nik}`)),
         );
         setSuccessMessage(`${selected.size} individu berhasil dihapus.`);
       }
@@ -140,7 +140,7 @@ export default function IndividuListContainer() {
 
     setLoading(true);
     try {
-      await api.post("/individu/import", formData, {
+      await api.post("/api/individu/import", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setSuccessMessage("Import data berhasil!");
@@ -155,10 +155,8 @@ export default function IndividuListContainer() {
 
   const lindonganOptions = useMemo(
     () => Array.from(new Set(individu.map((i) => i.lindongan))).filter(Boolean),
-    [individu]
+    [individu],
   );
-
-  if (loading) return <p className="py-4 text-center">Loading data...</p>;
 
   return (
     <div>
@@ -267,6 +265,7 @@ export default function IndividuListContainer() {
           <tbody>
             <IndividuTable
               data={currentItems}
+              loading={loading}
               onEdit={(nik) =>
                 (window.location.href = `/dashboard/penduduk/individu/edit/${nik}`)
               }

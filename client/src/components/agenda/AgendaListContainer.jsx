@@ -76,7 +76,7 @@ export default function AgendaListContainer() {
         (i) =>
           (i.title || "").toLowerCase().includes(q) ||
           (i.location || "").toLowerCase().includes(q) ||
-          (i.category || "").toLowerCase().includes(q)
+          (i.category || "").toLowerCase().includes(q),
       );
     }
 
@@ -156,7 +156,7 @@ export default function AgendaListContainer() {
 
       if (confirm.mode === "bulk") {
         await Promise.all(
-          Array.from(selected).map((id) => api.delete(`/agenda/${id}`))
+          Array.from(selected).map((id) => api.delete(`api/agenda/${id}`)),
         );
         showToast("Agenda terpilih berhasil dihapus");
       }

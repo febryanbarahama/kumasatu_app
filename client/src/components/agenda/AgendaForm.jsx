@@ -28,7 +28,7 @@ export default function AgendaForm({ isEdit }) {
   useEffect(() => {
     if (isEdit && id) {
       api
-        .get(`/agenda/${id}`)
+        .get(`api/agenda/${id}`)
         .then((res) => {
           const data = res.data;
 
@@ -43,8 +43,7 @@ export default function AgendaForm({ isEdit }) {
           });
 
           if (data.image) {
-            const baseURL =
-              import.meta.env.VITE_API_URL || "http://localhost:5000";
+            const baseURL = import.meta.env.VITE_API_BASE_URL;
             setPreviewImage(`${baseURL}${data.image}`);
           }
         })
@@ -85,7 +84,7 @@ export default function AgendaForm({ isEdit }) {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await api.post("/upload/image", formData, {
+      const res = await api.post("api/upload/image", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -114,10 +113,10 @@ export default function AgendaForm({ isEdit }) {
 
     try {
       if (isEdit) {
-        await api.put(`/agenda/${id}`, form);
+        await api.put(`api/agenda/${id}`, form);
         showToast("Agenda berhasil diperbarui");
       } else {
-        await api.post("/agenda", form);
+        await api.post("api/agenda", form);
         showToast("Agenda berhasil ditambahkan");
       }
 

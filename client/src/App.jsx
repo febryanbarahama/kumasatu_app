@@ -1,141 +1,184 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/authContexts.jsx";
-import Login from "./pages/Login.jsx";
-import DashboardPage from "./pages/DashboardPage.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import AccountPage from "./pages/AccountPage.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Keluarga from "./pages/Keluarga.jsx";
-import KeluargaForm from "./components/keluarga/KeluargaForm.jsx";
-import Individu from "./pages/Individu.jsx";
-import IndividuForm from "./components/individu/IndividuForm.jsx";
-import BeritaPage from "./pages/BeritaPage.jsx";
-import BeritaForm from "./components/berita/BeritaForm.jsx";
-import AgendaPage from "./pages/AgendaPage.jsx";
-import AgendaForm from "./components/agenda/AgendaForm.jsx";
-import GaleriPage from "./pages/GalleryPage.jsx";
-import GaleriForm from "./components/galeri/GaleriForm.jsx";
-import AparaturListPage from "./pages/AparaturPage.jsx";
-import AparaturForm from "./components/aparatur/AparaturForm.jsx";
-import AdministrasiPage from "./pages/AdministrasiPage.jsx";
-import PengaduanPage from "./pages/PengaduanPage.jsx";
 
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+
+// 🔥 CONFIG GLOBAL
+NProgress.configure({
+  showSpinner: false,
+  speed: 500,
+  minimum: 0.2,
+});
+
+// =========================
+// LAZY LOAD PAGES
+// =========================
+const Login = lazy(() => import("./pages/Login.jsx"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage.jsx"));
+const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
+const AccountPage = lazy(() => import("./pages/AccountPage.jsx"));
+
+const Keluarga = lazy(() => import("./pages/Keluarga.jsx"));
+const KeluargaForm = lazy(
+  () => import("./components/keluarga/KeluargaForm.jsx"),
+);
+
+const Individu = lazy(() => import("./pages/Individu.jsx"));
+const IndividuForm = lazy(
+  () => import("./components/individu/IndividuForm.jsx"),
+);
+
+const BeritaPage = lazy(() => import("./pages/BeritaPage.jsx"));
+const BeritaForm = lazy(() => import("./components/berita/BeritaForm.jsx"));
+
+const AgendaPage = lazy(() => import("./pages/AgendaPage.jsx"));
+const AgendaForm = lazy(() => import("./components/agenda/AgendaForm.jsx"));
+
+const GaleriPage = lazy(() => import("./pages/GalleryPage.jsx"));
+const GaleriForm = lazy(() => import("./components/galeri/GaleriForm.jsx"));
+
+const AparaturListPage = lazy(() => import("./pages/AparaturPage.jsx"));
+const AparaturForm = lazy(
+  () => import("./components/aparatur/AparaturForm.jsx"),
+);
+
+const AdministrasiPage = lazy(() => import("./pages/AdministrasiPage.jsx"));
+const PengaduanPage = lazy(() => import("./pages/PengaduanPage.jsx"));
+
+// NON-LAZY (WAJIB CEPAT)
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+
+// =========================
+// PUBLIC ROUTE
+// =========================
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return null;
 
   if (user) return <Navigate to="/dashboard" replace />;
 
   return children;
 }
 
+// =========================
+// APP
+// =========================
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* 🔥 Suspense global */}
+        <Suspense fallback={null}>
+          <Routes>
+            {/* Redirect root */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
-          />
-
-          {/* Dashboard layout route */}
-          <Route
-            path="/dashboard/*"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          >
-            {/* Default dashboard content */}
-            <Route index element={<Dashboard />} />
-            {/* Route untuk Account */}
-            <Route path="account" element={<AccountPage />} />
-
-            {/* Route untuk Keluarga */}
-            <Route path="penduduk/keluarga" element={<Keluarga />} />
+            {/* Login */}
             <Route
-              path="penduduk/keluarga/add"
-              element={<KeluargaForm isEdit={false} />}
-            />
-            <Route
-              path="penduduk/keluarga/edit/:no_kk"
-              element={<KeluargaForm isEdit={true} />}
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
             />
 
-            {/* Route untuk Individu */}
-            <Route path="penduduk/individu" element={<Individu />} />
+            {/* =========================
+                DASHBOARD (PROTECTED)
+            ========================= */}
             <Route
-              path="penduduk/individu/add"
-              element={<IndividuForm isEdit={false} />}
-            />
-            <Route
-              path="penduduk/individu/edit/:nik"
-              element={<IndividuForm isEdit={true} />}
-            />
+              path="/dashboard/*"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            >
+              {/* Default */}
+              <Route index element={<Dashboard />} />
 
-            {/* Route untuk Berita */}
-            <Route path="informasi/berita" element={<BeritaPage />} />
-            <Route
-              path="informasi/berita/add"
-              element={<BeritaForm isEdit={false} />}
-            />
-            <Route
-              path="informasi/berita/edit/:id"
-              element={<BeritaForm isEdit={true} />}
-            />
+              {/* Account */}
+              <Route path="account" element={<AccountPage />} />
 
-            {/* Route untuk Agenda*/}
-            <Route path="informasi/agenda" element={<AgendaPage />} />
-            <Route
-              path="informasi/agenda/add"
-              element={<AgendaForm isEdit={false} />}
-            />
-            <Route
-              path="informasi/agenda/edit/:id"
-              element={<AgendaForm isEdit={true} />}
-            />
+              {/* PENDUDUK */}
+              <Route path="penduduk/keluarga" element={<Keluarga />} />
+              <Route
+                path="penduduk/keluarga/add"
+                element={<KeluargaForm isEdit={false} />}
+              />
+              <Route
+                path="penduduk/keluarga/edit/:no_kk"
+                element={<KeluargaForm isEdit={true} />}
+              />
 
-            {/* Route untuk Galeri */}
-            <Route path="galeri" element={<GaleriPage />} />
-            <Route path="galeri/add" element={<GaleriForm isEdit={false} />} />
-            <Route
-              path="galeri/edit/:id"
-              element={<GaleriForm isEdit={true} />}
-            />
+              <Route path="penduduk/individu" element={<Individu />} />
+              <Route
+                path="penduduk/individu/add"
+                element={<IndividuForm isEdit={false} />}
+              />
+              <Route
+                path="penduduk/individu/edit/:nik"
+                element={<IndividuForm isEdit={true} />}
+              />
 
-            {/* Route untuk Aparatur */}
-            <Route
-              path="profil-kampung/aparatur"
-              element={<AparaturListPage />}
-            />
-            <Route
-              path="profil-kampung/aparatur/add"
-              element={<AparaturForm isEdit={false} />}
-            />
-            <Route
-              path="profil-kampung/aparatur/edit/:id"
-              element={<AparaturForm isEdit={true} />}
-            />
+              {/* INFORMASI */}
+              <Route path="informasi/berita" element={<BeritaPage />} />
+              <Route
+                path="informasi/berita/add"
+                element={<BeritaForm isEdit={false} />}
+              />
+              <Route
+                path="informasi/berita/edit/:id"
+                element={<BeritaForm isEdit={true} />}
+              />
 
-            {/* Route untuk Layanan Persuratan */}
-            <Route path="layanan/administrasi" element={<AdministrasiPage />} />
+              <Route path="informasi/agenda" element={<AgendaPage />} />
+              <Route
+                path="informasi/agenda/add"
+                element={<AgendaForm isEdit={false} />}
+              />
+              <Route
+                path="informasi/agenda/edit/:id"
+                element={<AgendaForm isEdit={true} />}
+              />
 
-            {/* Route untuk Layanan pengaduan */}
-            <Route path="layanan/pengaduan" element={<PengaduanPage />} />
+              {/* GALERI */}
+              <Route path="galeri" element={<GaleriPage />} />
+              <Route
+                path="galeri/add"
+                element={<GaleriForm isEdit={false} />}
+              />
+              <Route
+                path="galeri/edit/:id"
+                element={<GaleriForm isEdit={true} />}
+              />
 
-            {/* Route lain bisa ditambahkan di sini */}
-          </Route>
-        </Routes>
+              {/* PROFIL */}
+              <Route
+                path="profil-kampung/aparatur"
+                element={<AparaturListPage />}
+              />
+              <Route
+                path="profil-kampung/aparatur/add"
+                element={<AparaturForm isEdit={false} />}
+              />
+              <Route
+                path="profil-kampung/aparatur/edit/:id"
+                element={<AparaturForm isEdit={true} />}
+              />
+
+              {/* LAYANAN */}
+              <Route
+                path="layanan/administrasi"
+                element={<AdministrasiPage />}
+              />
+              <Route path="layanan/pengaduan" element={<PengaduanPage />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
