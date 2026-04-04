@@ -1,5 +1,4 @@
 import getPool from "../config/db.js";
-import cloudinary from "../config/cloudinaryClient.js";
 
 /* =========================
    GET ALL APARATUR
@@ -26,7 +25,7 @@ export const getAllAparatur = async (req, res) => {
 };
 
 /* =========================
-   GET APARATUR BY ID
+   GET BY ID
 ========================= */
 export const getAparaturById = async (req, res) => {
   try {
@@ -34,7 +33,7 @@ export const getAparaturById = async (req, res) => {
     const id = Number(req.params.id);
 
     if (!id) {
-      return res.status(400).json({ message: "ID aparatur tidak valid." });
+      return res.status(400).json({ message: "ID tidak valid." });
     }
 
     const [rows] = await pool.query(
@@ -43,22 +42,22 @@ export const getAparaturById = async (req, res) => {
     );
 
     if (!rows.length) {
-      return res
-        .status(404)
-        .json({ message: "Data aparatur tidak ditemukan." });
+      return res.status(404).json({
+        message: "Data tidak ditemukan.",
+      });
     }
 
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Gagal mengambil data aparatur:", error);
+    console.error(error);
     res.status(500).json({
-      message: "Terjadi kesalahan saat mengambil data aparatur.",
+      message: "Terjadi kesalahan server.",
     });
   }
 };
 
 /* =========================
-   CREATE APARATUR
+   CREATE
 ========================= */
 export const createAparatur = async (req, res) => {
   try {
@@ -73,16 +72,15 @@ export const createAparatur = async (req, res) => {
 
     if (!req.file) {
       return res.status(400).json({
-        message: "Foto aparatur wajib diupload.",
+        message: "Foto wajib diupload.",
       });
     }
 
-    const foto = req.file.path; // secure_url
-    const fotoPublicId = req.file.filename; // public_id
+    const foto = req.file.path;
 
     const [result] = await pool.query(
       `INSERT INTO aparatur 
-      (nama, jabatan, wa, email, ig, fb, foto , status, created_at, updated_at)
+      (nama, jabatan, wa, email, ig, fb, foto, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         nama,
@@ -92,27 +90,25 @@ export const createAparatur = async (req, res) => {
         ig || null,
         fb || null,
         foto,
-        fotoPublicId,
-        status || "active",
+        status || "aktif",
       ],
     );
 
     res.status(201).json({
-      message: "Data aparatur berhasil ditambahkan.",
+      message: "Data berhasil ditambahkan.",
       id: result.insertId,
     });
   } catch (error) {
-    console.error("Gagal menambahkan data aparatur:", error);
+    console.error("CREATE ERROR:", error);
     res.status(500).json({
-      message: "Terjadi kesalahan pada server.",
+      message: "Terjadi kesalahan server.",
     });
   }
 };
 
 /* =========================
-   UPDATE APARATUR
+   UPDATE
 ========================= */
-
 export const updateAparatur = async (req, res) => {
   try {
     const pool = getPool();
@@ -126,30 +122,22 @@ export const updateAparatur = async (req, res) => {
       });
     }
 
-    // Ambil data lama
-    const [[old]] = await pool.query(
-      "SELECT foto, foto_public_id FROM aparatur WHERE id = ?",
-      [id],
-    );
+    // ambil data lama
+    const [rows] = await pool.query("SELECT foto FROM aparatur WHERE id = ?", [
+      id,
+    ]);
 
-    if (!old) {
-      return res
-        .status(404)
-        .json({ message: "Data aparatur tidak ditemukan." });
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Data tidak ditemukan.",
+      });
     }
 
-    let foto = old.foto;
-    let fotoPublicId = old.foto_public_id;
+    let foto = rows[0].foto;
 
-    // Jika upload foto baru
+    // jika upload foto baru
     if (req.file) {
-      // hapus foto lama
-      if (fotoPublicId) {
-        await cloudinary.uploader.destroy(fotoPublicId);
-      }
-
       foto = req.file.path;
-      fotoPublicId = req.file.filename;
     }
 
     await pool.query(
@@ -161,7 +149,6 @@ export const updateAparatur = async (req, res) => {
         ig = ?, 
         fb = ?, 
         foto = ?, 
-        foto_public_id = ?, 
         status = ?, 
         updated_at = NOW()
        WHERE id = ?`,
@@ -173,52 +160,49 @@ export const updateAparatur = async (req, res) => {
         ig || null,
         fb || null,
         foto,
-        fotoPublicId,
-        status || "active",
+        status || "aktif",
         id,
       ],
     );
 
-    res.json({ message: "Data aparatur berhasil diperbarui." });
+    res.json({
+      message: "Data berhasil diperbarui.",
+    });
   } catch (error) {
-    console.error("Gagal memperbarui data aparatur:", error);
+    console.error("UPDATE ERROR:", error);
     res.status(500).json({
-      message: "Terjadi kesalahan saat memperbarui data aparatur.",
+      message: "Terjadi kesalahan saat update.",
     });
   }
 };
 
 /* =========================
-   DELETE APARATUR
+   DELETE
 ========================= */
 export const deleteAparatur = async (req, res) => {
   try {
     const pool = getPool();
     const id = Number(req.params.id);
 
-    const [[data]] = await pool.query(
-      "SELECT foto_public_id FROM aparatur WHERE id = ?",
-      [id],
-    );
+    const [rows] = await pool.query("SELECT foto FROM aparatur WHERE id = ?", [
+      id,
+    ]);
 
-    if (!data) {
-      return res
-        .status(404)
-        .json({ message: "Data aparatur tidak ditemukan." });
-    }
-
-    // hapus dari cloudinary
-    if (data.foto_public_id) {
-      await cloudinary.uploader.destroy(data.foto_public_id);
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Data tidak ditemukan.",
+      });
     }
 
     await pool.query("DELETE FROM aparatur WHERE id = ?", [id]);
 
-    res.json({ message: "Data aparatur berhasil dihapus." });
+    res.json({
+      message: "Data berhasil dihapus.",
+    });
   } catch (error) {
-    console.error("Gagal menghapus data aparatur:", error);
+    console.error("DELETE ERROR:", error);
     res.status(500).json({
-      message: "Terjadi kesalahan saat menghapus data aparatur.",
+      message: "Terjadi kesalahan saat delete.",
     });
   }
 };
