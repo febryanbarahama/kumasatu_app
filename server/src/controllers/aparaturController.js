@@ -13,7 +13,7 @@ export const getAllAparatur = async (req, res) => {
 
     const [rows] = await pool.query(
       "SELECT * FROM aparatur ORDER BY id DESC LIMIT ? OFFSET ?",
-      [limit, offset]
+      [limit, offset],
     );
 
     res.status(200).json(rows);
@@ -39,7 +39,7 @@ export const getAparaturById = async (req, res) => {
 
     const [rows] = await pool.query(
       "SELECT * FROM aparatur WHERE id = ? LIMIT 1",
-      [id]
+      [id],
     );
 
     if (!rows.length) {
@@ -82,8 +82,8 @@ export const createAparatur = async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO aparatur 
-      (nama, jabatan, wa, email, ig, fb, foto, foto_public_id, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      (nama, jabatan, wa, email, ig, fb, foto , status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         nama,
         jabatan,
@@ -94,7 +94,7 @@ export const createAparatur = async (req, res) => {
         foto,
         fotoPublicId,
         status || "active",
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -129,7 +129,7 @@ export const updateAparatur = async (req, res) => {
     // Ambil data lama
     const [[old]] = await pool.query(
       "SELECT foto, foto_public_id FROM aparatur WHERE id = ?",
-      [id]
+      [id],
     );
 
     if (!old) {
@@ -176,7 +176,7 @@ export const updateAparatur = async (req, res) => {
         fotoPublicId,
         status || "active",
         id,
-      ]
+      ],
     );
 
     res.json({ message: "Data aparatur berhasil diperbarui." });
@@ -198,7 +198,7 @@ export const deleteAparatur = async (req, res) => {
 
     const [[data]] = await pool.query(
       "SELECT foto_public_id FROM aparatur WHERE id = ?",
-      [id]
+      [id],
     );
 
     if (!data) {
