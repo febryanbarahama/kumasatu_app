@@ -7,13 +7,7 @@ export const getAllAparatur = async (req, res) => {
   try {
     const pool = getPool();
 
-    const limit = Number(req.query.limit) || 50;
-    const offset = Number(req.query.offset) || 0;
-
-    const [rows] = await pool.query(
-      "SELECT * FROM aparatur ORDER BY id DESC LIMIT ? OFFSET ?",
-      [limit, offset],
-    );
+    const [rows] = await pool.query("SELECT * FROM aparatur ORDER BY id DESC");
 
     res.status(200).json(rows);
   } catch (error) {
@@ -31,10 +25,6 @@ export const getAparaturById = async (req, res) => {
   try {
     const pool = getPool();
     const id = Number(req.params.id);
-
-    if (!id) {
-      return res.status(400).json({ message: "ID tidak valid." });
-    }
 
     const [rows] = await pool.query(
       "SELECT * FROM aparatur WHERE id = ? LIMIT 1",
@@ -76,7 +66,8 @@ export const createAparatur = async (req, res) => {
       });
     }
 
-    const foto = req.file.path;
+    // 🔥 FIX DI SINI
+    const foto = req.file.secure_url || req.file.path || req.file.url;
 
     const [result] = await pool.query(
       `INSERT INTO aparatur 
@@ -122,7 +113,6 @@ export const updateAparatur = async (req, res) => {
       });
     }
 
-    // ambil data lama
     const [rows] = await pool.query("SELECT foto FROM aparatur WHERE id = ?", [
       id,
     ]);
@@ -135,9 +125,9 @@ export const updateAparatur = async (req, res) => {
 
     let foto = rows[0].foto;
 
-    // jika upload foto baru
+    // 🔥 FIX DI SINI
     if (req.file) {
-      foto = req.file.path;
+      foto = req.file.secure_url || req.file.path || req.file.url;
     }
 
     await pool.query(
