@@ -39,7 +39,7 @@ export const getAparaturById = async (req, res) => {
 
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error(error);
+    console.error("GET BY ID ERROR:", error);
     res.status(500).json({
       message: "Terjadi kesalahan server.",
     });
@@ -60,14 +60,14 @@ export const createAparatur = async (req, res) => {
       });
     }
 
-    if (!req.file) {
+    // ✅ WAJIB Cloudinary
+    if (!req.file || !req.file.secure_url) {
       return res.status(400).json({
-        message: "Foto wajib diupload.",
+        message: "Upload foto gagal atau tidak ditemukan.",
       });
     }
 
-    // 🔥 FIX DI SINI
-    const foto = req.file.secure_url || req.file.path || req.file.url;
+    const foto = req.file.secure_url; // ✅ ONLY CLOUDINARY
 
     const [result] = await pool.query(
       `INSERT INTO aparatur 
@@ -125,9 +125,9 @@ export const updateAparatur = async (req, res) => {
 
     let foto = rows[0].foto;
 
-    // 🔥 FIX DI SINI
-    if (req.file) {
-      foto = req.file.secure_url || req.file.path || req.file.url;
+    // ✅ Kalau upload baru → pakai Cloudinary
+    if (req.file && req.file.secure_url) {
+      foto = req.file.secure_url;
     }
 
     await pool.query(
@@ -183,6 +183,9 @@ export const deleteAparatur = async (req, res) => {
         message: "Data tidak ditemukan.",
       });
     }
+
+    // 🔥 OPTIONAL: kalau mau sekalian hapus di Cloudinary
+    // (butuh public_id, nanti bisa kita tambahkan kalau kamu mau)
 
     await pool.query("DELETE FROM aparatur WHERE id = ?", [id]);
 

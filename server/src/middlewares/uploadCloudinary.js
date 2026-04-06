@@ -5,7 +5,7 @@ import cloudinary from "../config/cloudinaryClient.js";
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "berita",
+    folder: "image",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
