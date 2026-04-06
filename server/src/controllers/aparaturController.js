@@ -125,9 +125,14 @@ export const updateAparatur = async (req, res) => {
 
     let foto = rows[0].foto;
 
-    // ✅ Kalau upload baru → pakai Cloudinary
+    // ✅ kalau upload file baru (Cloudinary)
     if (req.file && req.file.secure_url) {
       foto = req.file.secure_url;
+    }
+
+    // ✅ kalau frontend kirim URL langsung
+    else if (req.body.foto && req.body.foto.startsWith("http")) {
+      foto = req.body.foto;
     }
 
     await pool.query(
