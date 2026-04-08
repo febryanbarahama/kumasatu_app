@@ -2,6 +2,27 @@ import getPool from "../config/db.js";
 import cloudinary from "../config/cloudinaryClient.js";
 
 /* =========================
+   HELPER: ambil publicId dari URL
+========================= */
+const getPublicId = (url) => {
+  try {
+    if (!url || !url.includes("cloudinary")) return null;
+
+    const parts = url.split("/");
+    const fileName = parts[parts.length - 1];
+    const publicId = fileName.split(".")[0];
+
+    // jika pakai folder (misalnya agenda/)
+    const folderIndex = parts.findIndex((p) => p === "upload") + 1;
+    const folderPath = parts.slice(folderIndex, parts.length - 1).join("/");
+
+    return folderPath ? `${folderPath}/${publicId}` : publicId;
+  } catch {
+    return null;
+  }
+};
+
+/* =========================
    GET ALL AGENDA
 ========================= */
 export const getAllAgenda = async (req, res) => {
@@ -12,11 +33,13 @@ export const getAllAgenda = async (req, res) => {
     const offset = Number(req.query.offset) || 0;
 
     const [rows] = await pool.query(
-      "SELECT * FROM agenda ORDER BY date DESC LIMIT ? OFFSET ?",
-      [limit, offset]
+      `SELECT * FROM agenda 
+       ORDER BY date DESC 
+       LIMIT ? OFFSET ?`,
+      [limit, offset],
     );
 
-    res.json(rows);
+    res.status(200).json(rows);
   } catch (error) {
     console.error("Gagal mengambil data agenda:", error);
     res.status(500).json({
@@ -39,14 +62,14 @@ export const getAgendaById = async (req, res) => {
 
     const [rows] = await pool.query(
       "SELECT * FROM agenda WHERE id = ? LIMIT 1",
-      [id]
+      [id],
     );
 
     if (!rows.length) {
       return res.status(404).json({ message: "Data agenda tidak ditemukan." });
     }
 
-    res.json(rows[0]);
+    res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Gagal mengambil agenda:", error);
     res.status(500).json({
@@ -61,7 +84,8 @@ export const getAgendaById = async (req, res) => {
 export const createAgenda = async (req, res) => {
   try {
     const pool = getPool();
-    const { title, date, location, time, category, description } = req.body;
+    const { title, date, time, location, category, description, image } =
+      req.body;
 
     if (!title || !date || !location) {
       return res.status(400).json({
@@ -69,12 +93,13 @@ export const createAgenda = async (req, res) => {
       });
     }
 
-    const imageUrl = req.file ? req.file.path : null;
+    // 🔥 FIX: fleksibel (upload / URL manual)
+    const imageUrl = req.file?.secure_url || req.file?.path || image || null;
 
     const [result] = await pool.query(
       `INSERT INTO agenda 
-      (title, date, time, location, category, image, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      (title, date, time, location, category, image, description, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         title,
         date,
@@ -83,7 +108,7 @@ export const createAgenda = async (req, res) => {
         category || null,
         imageUrl,
         description || null,
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -108,12 +133,12 @@ export const updateAgenda = async (req, res) => {
       return res.status(400).json({ message: "ID agenda tidak valid." });
     }
 
-    const { title, date, time, location, category, description } = req.body;
+    const { title, date, time, location, category, description, image } =
+      req.body;
 
-    // Ambil data lama
     const [[existing]] = await pool.query(
       "SELECT image FROM agenda WHERE id = ? LIMIT 1",
-      [id]
+      [id],
     );
 
     if (!existing) {
@@ -122,18 +147,27 @@ export const updateAgenda = async (req, res) => {
 
     let imageUrl = existing.image;
 
-    // Jika upload gambar baru
+    // 🔥 FIX: jika upload baru
     if (req.file) {
-      // hapus image lama
-      if (existing.image) {
-        const publicId = existing.image.split("/").pop().split(".")[0];
+      const publicId = getPublicId(existing.image);
+      if (publicId) {
         await cloudinary.uploader.destroy(publicId);
       }
 
-      imageUrl = req.file.path;
+      imageUrl = req.file.secure_url || req.file.path;
     }
 
-    const [result] = await pool.query(
+    // 🔥 FIX: jika kirim URL manual dari frontend
+    if (!req.file && image && image !== existing.image) {
+      const publicId = getPublicId(existing.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+
+      imageUrl = image;
+    }
+
+    await pool.query(
       `UPDATE agenda SET
         title = ?, 
         date = ?, 
@@ -141,7 +175,8 @@ export const updateAgenda = async (req, res) => {
         location = ?, 
         category = ?, 
         image = ?, 
-        description = ?
+        description = ?, 
+        updated_at = NOW()
        WHERE id = ?`,
       [
         title,
@@ -152,10 +187,12 @@ export const updateAgenda = async (req, res) => {
         imageUrl,
         description || null,
         id,
-      ]
+      ],
     );
 
-    res.json({ message: "Agenda berhasil diperbarui." });
+    res.status(200).json({
+      message: "Agenda berhasil diperbarui.",
+    });
   } catch (error) {
     console.error("Gagal update agenda:", error);
     res.status(500).json({ message: "Terjadi kesalahan pada server." });
@@ -172,21 +209,24 @@ export const deleteAgenda = async (req, res) => {
 
     const [[existing]] = await pool.query(
       "SELECT image FROM agenda WHERE id = ? LIMIT 1",
-      [id]
+      [id],
     );
 
     if (!existing) {
       return res.status(404).json({ message: "Agenda tidak ditemukan." });
     }
 
-    if (existing.image) {
-      const publicId = existing.image.split("/").pop().split(".")[0];
+    // 🔥 FIX: hapus dari cloudinary dengan aman
+    const publicId = getPublicId(existing.image);
+    if (publicId) {
       await cloudinary.uploader.destroy(publicId);
     }
 
     await pool.query("DELETE FROM agenda WHERE id = ?", [id]);
 
-    res.json({ message: "Agenda berhasil dihapus." });
+    res.status(200).json({
+      message: "Agenda berhasil dihapus.",
+    });
   } catch (error) {
     console.error("Gagal hapus agenda:", error);
     res.status(500).json({ message: "Terjadi kesalahan pada server." });
