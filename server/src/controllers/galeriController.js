@@ -4,22 +4,22 @@ import cloudinary from "../config/cloudinaryClient.js";
 /* =========================
    HELPER
 ========================= */
-const getImageUrl = (file) => {
-  if (!file) return null;
-  return file.path || file.url || null;
-};
+// const getImageUrl = (file) => {
+//   if (!file) return null;
+//   return file.path || file.url || null;
+// };
 
-const getPublicIdFromUrl = (url) => {
-  if (!url || !url.includes("cloudinary")) return null;
+// const getPublicIdFromUrl = (url) => {
+//   if (!url || !url.includes("cloudinary")) return null;
 
-  try {
-    const parts = url.split("/");
-    const fileName = parts.slice(-2).join("/"); // handle folder
-    return fileName.split(".")[0];
-  } catch {
-    return null;
-  }
-};
+//   try {
+//     const parts = url.split("/");
+//     const fileName = parts.slice(-2).join("/");
+//     return fileName.split(".")[0];
+//   } catch {
+//     return null;
+//   }
+// };
 
 /* =========================
    GET semua galeri
@@ -87,14 +87,13 @@ export const createGaleri = async (req, res) => {
       });
     }
 
-    if (!req.file) {
+    if (!req.file || !req.file.secure_url) {
       return res.status(400).json({
-        message: "Gambar wajib diupload.",
+        message: "Upload foto gagal atau tidak ditemukan.",
       });
     }
-
     // 🔥 FIX UTAMA
-    const image = getImageUrl(req.file);
+    const foto = req.file.secure_url;
 
     const [result] = await pool.query(
       `INSERT INTO galeri
@@ -150,17 +149,16 @@ export const updateGaleri = async (req, res) => {
       });
     }
 
-    let image = existing.image;
+    let image = rows[0].image;
 
-    // 🔥 upload baru
-    if (req.file) {
-      // hapus lama kalau dari Cloudinary
-      const publicId = getPublicIdFromUrl(existing.image);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
-      }
+    // ✅ kalau upload file baru (Cloudinary)
+    if (req.file && req.file.secure_url) {
+      foto = req.file.secure_url;
+    }
 
-      image = getImageUrl(req.file);
+    // ✅ kalau frontend kirim URL langsung
+    else if (req.body.image && req.body.image.startsWith("http")) {
+      foto = req.body.image;
     }
 
     await pool.query(
