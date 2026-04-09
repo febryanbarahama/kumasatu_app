@@ -2,6 +2,26 @@ import getPool from "../config/db.js";
 import cloudinary from "../config/cloudinaryClient.js";
 
 /* =========================
+   HELPER
+========================= */
+const getImageUrl = (file) => {
+  if (!file) return null;
+  return file.path || file.url || null;
+};
+
+const getPublicIdFromUrl = (url) => {
+  if (!url || !url.includes("cloudinary")) return null;
+
+  try {
+    const parts = url.split("/");
+    const fileName = parts.slice(-2).join("/"); // handle folder
+    return fileName.split(".")[0];
+  } catch {
+    return null;
+  }
+};
+
+/* =========================
    GET semua galeri
 ========================= */
 export const getAllGaleri = async (req, res) => {
@@ -73,7 +93,8 @@ export const createGaleri = async (req, res) => {
       });
     }
 
-    const image = req.file.path; // ✅ Cloudinary URL
+    // 🔥 FIX UTAMA
+    const image = getImageUrl(req.file);
 
     const [result] = await pool.query(
       `INSERT INTO galeri
@@ -118,7 +139,6 @@ export const updateGaleri = async (req, res) => {
 
     const { title, description, category, date, author, status } = req.body;
 
-    // 🔥 ambil data lama
     const [[existing]] = await pool.query(
       "SELECT image FROM galeri WHERE id = ? LIMIT 1",
       [id],
@@ -132,15 +152,15 @@ export const updateGaleri = async (req, res) => {
 
     let image = existing.image;
 
-    // 🔥 jika upload baru
+    // 🔥 upload baru
     if (req.file) {
-      // hapus image lama (optional)
-      if (existing.image) {
-        const publicId = existing.image.split("/").pop().split(".")[0];
+      // hapus lama kalau dari Cloudinary
+      const publicId = getPublicIdFromUrl(existing.image);
+      if (publicId) {
         await cloudinary.uploader.destroy(publicId);
       }
 
-      image = req.file.path;
+      image = getImageUrl(req.file);
     }
 
     await pool.query(
@@ -194,9 +214,9 @@ export const deleteGaleri = async (req, res) => {
       });
     }
 
-    // 🔥 hapus image cloudinary (optional)
-    if (existing.image) {
-      const publicId = existing.image.split("/").pop().split(".")[0];
+    // 🔥 hapus cloudinary kalau valid
+    const publicId = getPublicIdFromUrl(existing.image);
+    if (publicId) {
       await cloudinary.uploader.destroy(publicId);
     }
 
