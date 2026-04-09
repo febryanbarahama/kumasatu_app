@@ -2,26 +2,6 @@ import getPool from "../config/db.js";
 import cloudinary from "../config/cloudinaryClient.js";
 
 /* =========================
-   HELPER
-========================= */
-// const getImageUrl = (file) => {
-//   if (!file) return null;
-//   return file.path || file.url || null;
-// };
-
-// const getPublicIdFromUrl = (url) => {
-//   if (!url || !url.includes("cloudinary")) return null;
-
-//   try {
-//     const parts = url.split("/");
-//     const fileName = parts.slice(-2).join("/");
-//     return fileName.split(".")[0];
-//   } catch {
-//     return null;
-//   }
-// };
-
-/* =========================
    GET semua galeri
 ========================= */
 export const getAllGaleri = async (req, res) => {
@@ -74,7 +54,7 @@ export const getGaleriById = async (req, res) => {
 };
 
 /* =========================
-   CREATE galeri
+   CREATE galeri (FIX)
 ========================= */
 export const createGaleri = async (req, res) => {
   try {
@@ -87,13 +67,14 @@ export const createGaleri = async (req, res) => {
       });
     }
 
+    // ✅ WAJIB Cloudinary
     if (!req.file || !req.file.secure_url) {
       return res.status(400).json({
-        message: "Upload foto gagal atau tidak ditemukan.",
+        message: "Upload gambar gagal.",
       });
     }
-    // 🔥 FIX UTAMA
-    const foto = req.file.secure_url;
+
+    const image = req.file.secure_url; // 🔥 FIX UTAMA
 
     const [result] = await pool.query(
       `INSERT INTO galeri
@@ -123,7 +104,7 @@ export const createGaleri = async (req, res) => {
 };
 
 /* =========================
-   UPDATE galeri
+   UPDATE galeri (FIX)
 ========================= */
 export const updateGaleri = async (req, res) => {
   try {
@@ -151,15 +132,15 @@ export const updateGaleri = async (req, res) => {
 
     let image = existing.image;
 
-    // 🔥 upload baru
-    if (req.file) {
-      // hapus lama kalau dari Cloudinary
-      const publicId = getPublicIdFromUrl(existing.image);
-      if (publicId) {
+    // ✅ upload baru
+    if (req.file && req.file.secure_url) {
+      // hapus lama kalau cloudinary
+      if (existing.image && existing.image.startsWith("http")) {
+        const publicId = existing.image.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
       }
 
-      image = getImageUrl(req.file);
+      image = req.file.secure_url; // 🔥 FIX
     }
 
     await pool.query(
@@ -195,7 +176,7 @@ export const updateGaleri = async (req, res) => {
 };
 
 /* =========================
-   DELETE galeri
+   DELETE galeri (AMAN)
 ========================= */
 export const deleteGaleri = async (req, res) => {
   try {
@@ -213,9 +194,9 @@ export const deleteGaleri = async (req, res) => {
       });
     }
 
-    // 🔥 hapus cloudinary kalau valid
-    const publicId = getPublicIdFromUrl(existing.image);
-    if (publicId) {
+    // ✅ hapus hanya kalau cloudinary
+    if (existing.image && existing.image.startsWith("http")) {
+      const publicId = existing.image.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(publicId);
     }
 
