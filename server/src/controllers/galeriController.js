@@ -149,16 +149,17 @@ export const updateGaleri = async (req, res) => {
       });
     }
 
-    let image = rows[0].image;
+    let image = existing.image;
 
-    // ✅ kalau upload file baru (Cloudinary)
-    if (req.file && req.file.secure_url) {
-      foto = req.file.secure_url;
-    }
+    // 🔥 upload baru
+    if (req.file) {
+      // hapus lama kalau dari Cloudinary
+      const publicId = getPublicIdFromUrl(existing.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
 
-    // ✅ kalau frontend kirim URL langsung
-    else if (req.body.image && req.body.image.startsWith("http")) {
-      foto = req.body.image;
+      image = getImageUrl(req.file);
     }
 
     await pool.query(
