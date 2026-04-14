@@ -2,6 +2,21 @@ import getPool from "../config/db.js";
 import cloudinary from "../config/cloudinaryClient.js";
 
 /* =========================
+   HELPER: Ambil public_id Cloudinary
+========================= */
+const getPublicId = (url) => {
+  try {
+    if (!url) return null;
+
+    const parts = url.split("/");
+    const file = parts.slice(-2).join("/"); // folder + filename
+    return file.split(".")[0];
+  } catch {
+    return null;
+  }
+};
+
+/* =========================
    GET semua galeri
 ========================= */
 export const getAllGaleri = async (req, res) => {
@@ -10,7 +25,13 @@ export const getAllGaleri = async (req, res) => {
 
     const [rows] = await pool.query("SELECT * FROM galeri ORDER BY date DESC");
 
-    res.json(rows);
+    // 🔥 normalize (hindari path lama)
+    const normalized = rows.map((item) => ({
+      ...item,
+      image: item.image?.startsWith("http") ? item.image : null,
+    }));
+
+    res.json(normalized);
   } catch (error) {
     console.error("Gagal mengambil data galeri:", error);
     res.status(500).json({
@@ -44,6 +65,9 @@ export const getGaleriById = async (req, res) => {
       });
     }
 
+    // 🔥 normalize
+    galeri.image = galeri.image?.startsWith("http") ? galeri.image : null;
+
     res.json(galeri);
   } catch (error) {
     console.error("Gagal mengambil galeri:", error);
@@ -54,7 +78,7 @@ export const getGaleriById = async (req, res) => {
 };
 
 /* =========================
-   CREATE galeri (FIX)
+   CREATE galeri
 ========================= */
 export const createGaleri = async (req, res) => {
   try {
@@ -67,14 +91,14 @@ export const createGaleri = async (req, res) => {
       });
     }
 
-    // ✅ WAJIB Cloudinary
+    // ✅ wajib cloudinary
     if (!req.file || !req.file.secure_url) {
       return res.status(400).json({
         message: "Upload gambar gagal.",
       });
     }
 
-    const image = req.file.secure_url; // 🔥 FIX UTAMA
+    const image = req.file.secure_url;
 
     const [result] = await pool.query(
       `INSERT INTO galeri
@@ -104,7 +128,7 @@ export const createGaleri = async (req, res) => {
 };
 
 /* =========================
-   UPDATE galeri (FIX)
+   UPDATE galeri
 ========================= */
 export const updateGaleri = async (req, res) => {
   try {
@@ -132,15 +156,26 @@ export const updateGaleri = async (req, res) => {
 
     let image = existing.image;
 
-    // ✅ upload baru
+    /* =========================
+       PRIORITY UPDATE IMAGE
+    ========================= */
+
+    // ✅ 1. upload via multer
     if (req.file && req.file.secure_url) {
       // hapus lama kalau cloudinary
       if (existing.image && existing.image.startsWith("http")) {
-        const publicId = existing.image.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(publicId);
+        const publicId = getPublicId(existing.image);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
       }
 
-      image = req.file.secure_url; // 🔥 FIX
+      image = req.file.secure_url;
+    }
+
+    // ✅ 2. kirim URL dari frontend
+    else if (req.body.image && req.body.image.startsWith("http")) {
+      image = req.body.image;
     }
 
     await pool.query(
@@ -176,7 +211,7 @@ export const updateGaleri = async (req, res) => {
 };
 
 /* =========================
-   DELETE galeri (AMAN)
+   DELETE galeri
 ========================= */
 export const deleteGaleri = async (req, res) => {
   try {
@@ -196,8 +231,10 @@ export const deleteGaleri = async (req, res) => {
 
     // ✅ hapus hanya kalau cloudinary
     if (existing.image && existing.image.startsWith("http")) {
-      const publicId = existing.image.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(publicId);
+      const publicId = getPublicId(existing.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
     }
 
     await pool.query("DELETE FROM galeri WHERE id = ?", [id]);
