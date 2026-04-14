@@ -30,8 +30,6 @@ export default function BeritaListContainer() {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_BASE_URL;
-
   /* ================= FETCH DATA ================= */
   const fetchData = async () => {
     setLoading(true);
@@ -136,7 +134,7 @@ export default function BeritaListContainer() {
 
   const clearSelection = () => setSelected(new Set());
 
-  /* ================= DELETE HANDLERS ================= */
+  /* ================= DELETE ================= */
   const requestDeleteOne = (id) => {
     setConfirm({ open: true, mode: "single", targetId: id });
   };
@@ -150,7 +148,7 @@ export default function BeritaListContainer() {
     setDeleting(true);
     try {
       if (confirm.mode === "single") {
-        await api.delete(`/berita/${confirm.targetId}`);
+        await api.delete(`/api/berita/${confirm.targetId}`);
         showToast("Berita berhasil dihapus");
       }
 
@@ -224,7 +222,6 @@ export default function BeritaListContainer() {
           <BeritaTable
             loading={loading}
             items={currentItems}
-            baseURL={baseURL}
             onDelete={requestDeleteOne}
             onToggleSelect={toggleSelect}
             selected={selected}
@@ -235,7 +232,6 @@ export default function BeritaListContainer() {
           <BeritaGrid
             loading={loading}
             items={currentItems}
-            baseURL={baseURL}
             onDelete={requestDeleteOne}
             onToggleSelect={toggleSelect}
             selected={selected}

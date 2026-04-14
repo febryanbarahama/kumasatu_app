@@ -167,7 +167,7 @@ export default function KeluargaForm({ isEdit }) {
   useEffect(() => {
     if (isEdit && no_kk) {
       api
-        .get(`/keluarga/${no_kk}`)
+        .get(`api/keluarga/${no_kk}`)
         .then((res) => {
           const data = res.data;
           console.log(data);
@@ -299,10 +299,10 @@ export default function KeluargaForm({ isEdit }) {
 
     try {
       if (isEdit) {
-        await api.put(`/keluarga/${no_kk}`, submitData);
+        await api.put(`api/keluarga/${no_kk}`, submitData);
         showToast("Data keluarga berhasil diupdate", "success");
       } else {
-        await api.post("/keluarga", submitData);
+        await api.post("api/keluarga", submitData);
         showToast("Data keluarga berhasil ditambahkan", "success");
       }
       setTimeout(() => navigate("/dashboard/penduduk/keluarga"), 1500);
@@ -502,7 +502,7 @@ export default function KeluargaForm({ isEdit }) {
               disabled={disabled}
               error={errors[name]}
             />
-          )
+          ),
         )}
 
         <CheckboxGroup

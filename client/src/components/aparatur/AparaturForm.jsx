@@ -68,7 +68,7 @@ export default function AparaturForm({ isEdit }) {
           setJabatanCustom(isPreset ? "" : jabatanDb);
 
           if (data.foto) {
-            setPreviewImage(`${baseURL}${data.foto}`);
+            setPreviewImage(data.foto); // ✅ langsung pakai
           }
         })
         .catch(() => showToast("Gagal memuat data aparatur", "error"));

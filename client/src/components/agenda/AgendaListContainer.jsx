@@ -25,7 +25,7 @@ export default function AgendaListContainer() {
   // confirm delete
   const [confirm, setConfirm] = useState({
     open: false,
-    mode: null, // "single" | "bulk"
+    mode: null,
     targetId: null,
   });
   const [deleting, setDeleting] = useState(false);
@@ -36,7 +36,7 @@ export default function AgendaListContainer() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("api/agenda");
+      const res = await api.get("/api/agenda"); // 🔥 konsisten pakai /
       setData(res.data || []);
     } catch {
       showToast("Gagal mengambil data agenda", "error");
@@ -81,6 +81,7 @@ export default function AgendaListContainer() {
     }
 
     const { field, dir } = sortBy;
+
     list.sort((a, b) => {
       const va = a[field] ?? "";
       const vb = b[field] ?? "";
@@ -91,11 +92,11 @@ export default function AgendaListContainer() {
         return dir === "asc" ? da - db : db - da;
       }
 
-      if (String(va).toLowerCase() < String(vb).toLowerCase())
-        return dir === "asc" ? -1 : 1;
-      if (String(va).toLowerCase() > String(vb).toLowerCase())
-        return dir === "asc" ? 1 : -1;
-      return 0;
+      return (
+        String(va).localeCompare(String(vb), "id", {
+          sensitivity: "base",
+        }) * (dir === "asc" ? 1 : -1)
+      );
     });
 
     return list;
@@ -107,7 +108,7 @@ export default function AgendaListContainer() {
 
   useEffect(() => {
     if (page > totalPages) setPage(1);
-  }, [totalPages, page]);
+  }, [totalPages]);
 
   useEffect(() => {
     setPage(1);
@@ -150,13 +151,13 @@ export default function AgendaListContainer() {
     setDeleting(true);
     try {
       if (confirm.mode === "single") {
-        await api.delete(`api/agenda/${confirm.targetId}`);
+        await api.delete(`/api/agenda/${confirm.targetId}`);
         showToast("Agenda berhasil dihapus");
       }
 
       if (confirm.mode === "bulk") {
         await Promise.all(
-          Array.from(selected).map((id) => api.delete(`api/agenda/${id}`)),
+          Array.from(selected).map((id) => api.delete(`/api/agenda/${id}`)),
         );
         showToast("Agenda terpilih berhasil dihapus");
       }

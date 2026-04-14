@@ -227,7 +227,7 @@ export default function IndividuForm({ isEdit }) {
     if (!nik) return;
     const fetchData = async () => {
       try {
-        const res = await api.get(`/individu/${nik}`);
+        const res = await api.get(`api/individu/${nik}`);
         let data = { ...initialState, ...res.data };
 
         Object.keys(fieldMap).forEach((apiField) => {
@@ -326,10 +326,10 @@ export default function IndividuForm({ isEdit }) {
       });
 
       if (nik) {
-        await api.put(`/individu/${nik}`, payload);
+        await api.put(`api/individu/${nik}`, payload);
         showToast("Data berhasil diperbarui", "success");
       } else {
-        await api.post("/individu", payload);
+        await api.post("api/individu", payload);
         showToast("Data berhasil disimpan", "success");
       }
       setTimeout(() => navigate("/dashboard/penduduk/individu"), 1000);
@@ -393,7 +393,7 @@ export default function IndividuForm({ isEdit }) {
               required={field.required}
               error={errors[field.name]}
             />
-          )
+          ),
         )}
         <div className="md:col-span-2">
           <button

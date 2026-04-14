@@ -11,7 +11,7 @@ export default function GaleriForm({ isEdit }) {
     title: "",
     date: "",
     category: "",
-    image: "",
+    image: "", // ✅ selalu URL
     description: "",
     status: "active",
     author: "Admin Kampung Kuma I",
@@ -22,10 +22,9 @@ export default function GaleriForm({ isEdit }) {
   const [previewImage, setPreviewImage] = useState("");
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-  /* ================= FETCH DATA (EDIT) ================= */
+  /* ================= FETCH DATA ================= */
   useEffect(() => {
     if (isEdit && id) {
       api
@@ -43,42 +42,46 @@ export default function GaleriForm({ isEdit }) {
             author: data.author || "Admin Kampung Kuma I",
           });
 
+          // ✅ langsung pakai URL
           if (data.image) {
-            setPreviewImage(`${baseURL}${data.image}`);
+            setPreviewImage(data.image);
           }
         })
         .catch(() => showToast("Gagal memuat data galeri", "error"));
     }
   }, [isEdit, id]);
 
-  /* ================= HELPERS ================= */
+  /* ================= TOAST ================= */
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false }), 3000);
   };
 
+  /* ================= HANDLE INPUT ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ================= IMAGE UPLOAD ================= */
+  /* ================= UPLOAD IMAGE ================= */
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // VALIDASI
     if (file.size > MAX_FILE_SIZE) {
       showToast("Ukuran gambar maksimal 5MB", "error");
       return;
     }
 
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      showToast("Format gambar harus JPG, PNG, atau WebP", "error");
+      showToast("Format harus JPG, PNG, WebP", "error");
       return;
     }
 
-    setLoadingPreview(true);
+    // preview lokal (cepat)
     setPreviewImage(URL.createObjectURL(file));
+    setLoadingPreview(true);
 
     try {
       const formData = new FormData();
@@ -88,15 +91,21 @@ export default function GaleriForm({ isEdit }) {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setForm((prev) => ({ ...prev, image: res.data.url }));
+      // ✅ simpan URL (INI KUNCI)
+      setForm((prev) => ({
+        ...prev,
+        image: res.data.url,
+      }));
+
+      showToast("Upload gambar berhasil");
     } catch {
-      showToast("Upload gambar gagal", "error");
+      showToast("Upload gagal", "error");
     } finally {
       setLoadingPreview(false);
     }
   };
 
-  /* ================= VALIDATION ================= */
+  /* ================= VALIDASI ================= */
   const validate = () => {
     const errs = {};
     if (!form.title) errs.title = "Judul wajib diisi";
@@ -112,11 +121,14 @@ export default function GaleriForm({ isEdit }) {
     if (!validate()) return;
 
     try {
+      // 🔥 DEBUG (boleh hapus nanti)
+      console.log("SUBMIT DATA:", form);
+
       if (isEdit) {
-        await api.put(`api/galeri/${id}`, form);
+        await api.put(`api/galeri/${id}`, form); // ✅ JSON (BUKAN FormData)
         showToast("Galeri berhasil diperbarui");
       } else {
-        await api.post("api/galeri", form);
+        await api.post("api/galeri", form); // ✅ JSON
         showToast("Galeri berhasil ditambahkan");
       }
 
@@ -235,11 +247,12 @@ export default function GaleriForm({ isEdit }) {
           </select>
         </div>
 
-        {/* ACTIONS */}
+        {/* ACTION */}
         <div className="flex gap-4 pt-4">
           <button className="px-6 py-3 text-white bg-blue-600 rounded-md">
             {isEdit ? "Update" : "Simpan"}
           </button>
+
           <button
             type="button"
             onClick={() => navigate("/dashboard/galeri")}

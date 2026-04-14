@@ -30,14 +30,29 @@ export default function GaleriListContainer() {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  /* ================= NORMALIZE IMAGE ================= */
+  const normalizeImage = (img) => {
+    if (!img) return null;
+
+    // Cloudinary / external URL
+    if (img.startsWith("http")) return img;
+
+    // fallback kalau masih ada local path (optional)
+    return img;
+  };
 
   /* ================= FETCH ================= */
   const fetchData = async () => {
     setLoading(true);
     try {
       const res = await api.get("api/galeri");
-      setData(res.data || []);
+
+      const normalized = (res.data || []).map((item) => ({
+        ...item,
+        image: normalizeImage(item.image),
+      }));
+
+      setData(normalized);
     } catch {
       showToast("Gagal memuat data galeri", "error");
     } finally {
@@ -224,7 +239,6 @@ export default function GaleriListContainer() {
           <GaleriTable
             loading={loading}
             items={currentItems}
-            baseURL={baseURL}
             selected={selected}
             onToggleSelect={toggleSelect}
             onSelectAllPage={selectAllPage}
@@ -235,7 +249,6 @@ export default function GaleriListContainer() {
           <GaleriGrid
             loading={loading}
             items={currentItems}
-            baseURL={baseURL}
             onDelete={requestDeleteOne}
             onToggleSelect={toggleSelect}
             selected={selected}

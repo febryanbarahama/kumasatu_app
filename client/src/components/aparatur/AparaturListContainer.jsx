@@ -29,8 +29,6 @@ export default function AparaturListContainer() {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_BASE_URL;
-
   /* ================= FETCH DATA ================= */
   const fetchData = async () => {
     setLoading(true);
@@ -209,7 +207,6 @@ export default function AparaturListContainer() {
           <AparaturTable
             loading={loading}
             items={currentItems}
-            baseURL={baseURL}
             onDelete={requestDeleteOne}
             onToggleSelect={toggleSelect}
             selected={selected}
@@ -220,7 +217,6 @@ export default function AparaturListContainer() {
           <AparaturGrid
             loading={loading}
             items={currentItems}
-            baseURL={baseURL}
             onDelete={requestDeleteOne}
             onToggleSelect={toggleSelect}
             selected={selected}

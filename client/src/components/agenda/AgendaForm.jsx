@@ -42,9 +42,16 @@ export default function AgendaForm({ isEdit }) {
             description: data.description || "",
           });
 
+          // 🔥 FIX preview image
           if (data.image) {
-            const baseURL = import.meta.env.VITE_API_BASE_URL;
-            setPreviewImage(`${baseURL}${data.image}`);
+            if (data.image.startsWith("http")) {
+              setPreviewImage(data.image);
+            } else {
+              const baseURL = import.meta.env.VITE_API_BASE_URL;
+              setPreviewImage(`${baseURL}${data.image}`);
+            }
+          } else {
+            setPreviewImage("");
           }
         })
         .catch(() => showToast("Gagal memuat data agenda", "error"));
@@ -216,11 +223,24 @@ export default function AgendaForm({ isEdit }) {
           />
 
           {previewImage && (
-            <img
-              src={previewImage}
-              alt="preview"
-              className="object-cover w-40 h-40 mt-3 border rounded"
-            />
+            <div className="relative w-40 h-40 mt-3 overflow-hidden border rounded-md">
+              <img
+                src={previewImage}
+                alt="preview"
+                className={`object-cover w-full h-full transition duration-300 ${
+                  loadingPreview ? "blur-md scale-105 opacity-70" : "blur-0"
+                }`}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+
+              {loadingPreview && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-white rounded-full border-t-transparent animate-spin"></div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

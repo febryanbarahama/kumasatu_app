@@ -78,7 +78,7 @@ export default function AparaturTable({
                 {/* FOTO */}
                 <td className="p-3">
                   <img
-                    src={item.foto ? `${baseURL}${item.foto}` : "/no-image.png"}
+                    src={item.foto || "/no-image.png"}
                     alt={item.nama}
                     className="object-cover w-12 h-12 border rounded-full"
                   />

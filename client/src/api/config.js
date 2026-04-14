@@ -1,7 +1,18 @@
 import axios from "axios";
 import NProgress from "nprogress";
 
+/* =========================
+   MAIN API INSTANCE
+========================= */
 const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true, // 🔥 WAJIB untuk cookie refresh token
+});
+
+/* =========================
+   REFRESH CLIENT (NO INTERCEPTOR)
+========================= */
+const refreshClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
 });
@@ -52,16 +63,20 @@ export const attachToken = (token) => {
 ========================= */
 api.interceptors.response.use(
   (response) => {
-    NProgress.done(); // ✅ WAJIB
+    NProgress.done();
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
 
     /* =========================
-       HANDLE 401 (REFRESH)
+       HANDLE 401 (REFRESH TOKEN)
     ========================= */
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh") // 🔥 ANTI LOOP
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -71,7 +86,7 @@ api.interceptors.response.use(
             return api(originalRequest);
           })
           .finally(() => {
-            NProgress.done(); // ✅ pastikan selesai
+            NProgress.done();
           });
       }
 
@@ -79,7 +94,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await api.post("/api/auth/refresh");
+        const res = await refreshClient.post("/api/auth/refresh"); // ✅ FIX UTAMA
         const newToken = res.data.accessToken;
 
         attachToken(newToken);
@@ -90,14 +105,21 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (err) {
         processQueue(err, null);
+
+        // 🔥 OPTIONAL: redirect ke login kalau refresh gagal
+        if (err.response?.status === 401) {
+          attachToken(null);
+          window.location.href = "/login";
+        }
+
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
-        NProgress.done(); // ✅ WAJIB
+        NProgress.done();
       }
     }
 
-    NProgress.done(); // ✅ kalau error biasa
+    NProgress.done();
     return Promise.reject(error);
   },
 );

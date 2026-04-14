@@ -4,7 +4,6 @@ import { FiEdit2, FiTrash2 } from "react-icons/fi";
 export default function GaleriTable({
   loading,
   items,
-  baseURL,
   selected,
   onToggleSelect,
   onSelectAllPage,
@@ -31,6 +30,7 @@ export default function GaleriTable({
             <th className="p-3 text-center">Aksi</th>
           </tr>
         </thead>
+
         <tbody>
           {loading ? (
             <tr>
@@ -54,22 +54,34 @@ export default function GaleriTable({
                     onChange={() => onToggleSelect(item.id)}
                   />
                 </td>
+
+                {/* ✅ FIX TOTAL */}
                 <td className="p-3">
-                  <img
-                    src={
-                      item.image ? `${baseURL}${item.image}` : "/no-image.png"
-                    }
-                    className="object-cover w-16 h-12 rounded"
-                  />
+                  {item.image ? (
+                    <img
+                      src={item.image || "/no-image.png"}
+                      alt="thumb"
+                      className="object-cover w-16 h-12 border rounded"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-16 h-12 text-xs text-gray-400 border rounded">
+                      No Image
+                    </div>
+                  )}
                 </td>
+
                 <td className="p-3 font-medium">{item.title}</td>
+
                 <td className="p-3">{item.category || "-"}</td>
+
                 <td className="p-3">
                   {item.date
                     ? new Date(item.date).toLocaleDateString("id-ID")
                     : "-"}
                 </td>
+
                 <td className="p-3">{item.author}</td>
+
                 <td className="flex justify-center gap-2 p-3">
                   <Link
                     to={`/dashboard/galeri/edit/${item.id}`}
@@ -77,6 +89,7 @@ export default function GaleriTable({
                   >
                     <FiEdit2 />
                   </Link>
+
                   <button
                     onClick={() => onDelete(item.id)}
                     className="p-2 text-red-600 rounded hover:bg-red-100"

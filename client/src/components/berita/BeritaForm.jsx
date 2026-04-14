@@ -45,8 +45,11 @@ export default function BeritaForm({ isEdit }) {
 
           // --- Preview Gambar ---
           if (data.image) {
-            const baseURL = import.meta.env.VITE_API_BASE_URL;
-            setPreviewImage(`${baseURL}${data.image}`);
+            const imageUrl = data.image.startsWith("http")
+              ? data.image
+              : `${import.meta.env.VITE_API_BASE_URL}${data.image}`;
+
+            setPreviewImage(imageUrl);
           } else {
             setPreviewImage("");
           }

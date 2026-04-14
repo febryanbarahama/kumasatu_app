@@ -22,6 +22,17 @@ export default function BeritaTable({
     });
   };
 
+  // 🔥 HELPER WAJIB (ANTI ERROR SEMUA CASE)
+  const getImageUrl = (path) => {
+    if (!path || path === "null") return "/no-image.png";
+
+    // kalau sudah full URL (Cloudinary)
+    if (path.startsWith("http")) return path;
+
+    // kalau masih path lokal
+    return `${baseURL}${path}`;
+  };
+
   return (
     <div className="overflow-hidden bg-white border rounded-lg shadow-md dark:bg-gray-800">
       <table className="w-full">
@@ -32,7 +43,6 @@ export default function BeritaTable({
                 type="checkbox"
                 checked={allSelectedOnPage}
                 onChange={onSelectAllPage}
-                aria-label="Pilih semua pada halaman"
               />
             </th>
             <th className="p-3">Gambar</th>
@@ -43,6 +53,7 @@ export default function BeritaTable({
             <th className="p-3 text-center">Aksi</th>
           </tr>
         </thead>
+
         <tbody>
           {loading ? (
             [...Array(6)].map((_, i) => (
@@ -59,61 +70,73 @@ export default function BeritaTable({
               </td>
             </tr>
           ) : (
-            items.map((item) => (
-              <tr key={item.id} className="border-t dark:border-gray-700">
-                <td className="p-3">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(item.id)}
-                    onChange={() => onToggleSelect(item.id)}
-                  />
-                </td>
+            items.map((item) => {
+              const imageSrc = getImageUrl(item.image);
 
-                <td className="p-3">
-                  <img
-                    src={
-                      item.image ? `${baseURL}${item.image}` : "/no-image.png"
-                    }
-                    alt="thumb"
-                    className="object-cover w-16 h-12 border rounded"
-                  />
-                </td>
+              return (
+                <tr key={item.id} className="border-t dark:border-gray-700">
+                  {/* CHECKBOX */}
+                  <td className="p-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(item.id)}
+                      onChange={() => onToggleSelect(item.id)}
+                    />
+                  </td>
 
-                <td className="p-3 font-medium">{item.title}</td>
+                  {/* GAMBAR */}
+                  <td className="p-3">
+                    <img
+                      src={imageSrc || "/no-image.png"}
+                      alt="thumb"
+                      className="object-cover w-16 h-12 border rounded"
+                      onError={(e) => {
+                        if (!e.target.src.includes("no-image.png")) {
+                          e.target.src = "/no-image.png";
+                        }
+                      }}
+                    />
+                  </td>
 
-                <td className="p-3">
-                  <span className="px-2 py-1 text-sm text-white bg-blue-600 rounded">
-                    {item.category || "-"}
-                  </span>
-                </td>
+                  {/* JUDUL */}
+                  <td className="p-3 font-medium">{item.title}</td>
 
-                <td className="p-3">
-                  <div className="max-w-xs text-sm text-gray-600 truncate dark:text-gray-300">
-                    {item.excerpt || item.content || "-"}
-                  </div>
-                </td>
+                  {/* KATEGORI */}
+                  <td className="p-3">
+                    <span className="px-2 py-1 text-sm text-white bg-blue-600 rounded">
+                      {item.category || "-"}
+                    </span>
+                  </td>
 
-                <td className="p-3">{formatDate(item.date)}</td>
+                  {/* EXCERPT */}
+                  <td className="p-3">
+                    <div className="max-w-xs text-sm text-gray-600 truncate dark:text-gray-300">
+                      {item.excerpt || item.content || "-"}
+                    </div>
+                  </td>
 
-                <td className="flex justify-center gap-2 p-3">
-                  <Link
-                    to={`/dashboard/informasi/berita/edit/${item.id}`}
-                    className="p-2 text-blue-600 transition rounded hover:bg-blue-100 dark:hover:bg-blue-900 dark:text-blue-400"
-                    title="Edit"
-                  >
-                    <FiEdit2 />
-                  </Link>
+                  {/* TANGGAL */}
+                  <td className="p-3">{formatDate(item.date)}</td>
 
-                  <button
-                    onClick={() => onDelete(item.id)}
-                    className="p-2 text-red-600 transition rounded hover:bg-red-100 dark:hover:bg-red-900 dark:text-red-400"
-                    title="Hapus"
-                  >
-                    <FiTrash2 />
-                  </button>
-                </td>
-              </tr>
-            ))
+                  {/* AKSI */}
+                  <td className="flex justify-center gap-2 p-3">
+                    <Link
+                      to={`/dashboard/informasi/berita/edit/${item.id}`}
+                      className="p-2 text-blue-600 rounded hover:bg-blue-100"
+                    >
+                      <FiEdit2 />
+                    </Link>
+
+                    <button
+                      onClick={() => onDelete(item.id)}
+                      className="p-2 text-red-600 rounded hover:bg-red-100"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>
